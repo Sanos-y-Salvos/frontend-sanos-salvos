@@ -1,0 +1,6 @@
+# Enforce LF line endings for Docker files on all platforms
+Dockerfile         text eol=lf
+.dockerignore      text eol=lf
+docker-compose.yml text eol=lf
+nginx.conf         text eol=lf
+*.sh               text eol=lf
