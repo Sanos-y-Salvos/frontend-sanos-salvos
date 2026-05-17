@@ -5,6 +5,9 @@ services:
   frontend:
     container_name: frontend
     image: felruiz/frontend-sanos-salvos:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     platform: linux/amd64
     ports:
       - "80:80"
