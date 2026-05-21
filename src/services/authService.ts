@@ -16,21 +16,6 @@ export const authService = {
     return data.data;
   },
 
-  forgotPassword: async (email: string): Promise<{ message: string }> => {
-    const { data } = await authApi.post('/api/auth/forgot-password', { email });
-    return data.data;
-  },
-
-  resetPassword: async (email: string, code: string, newPassword: string): Promise<{ message: string }> => {
-    const { data } = await authApi.patch('/api/auth/reset-password', { email, code, newPassword });
-    return data.data;
-  },
-
-  cambiarContrasena: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
-    const { data } = await authApi.patch('/api/auth/change-password', { currentPassword, newPassword });
-    return data.data;
-  },
-
   getMe: async (): Promise<{
     id: string; email: string; role: string; permissions: string[] | null;
     name: string; avatarUrl?: string; status: string; tipo: 'ciudadano' | 'institucion';

@@ -32,6 +32,22 @@ export const userService = {
     await usersApi.delete('/api/users/perfil');
   },
 
+  // Password management
+  cambiarContrasena: async (currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+    const { data } = await usersApi.patch('/api/users/perfil/password', { currentPassword, newPassword });
+    return data.data;
+  },
+
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const { data } = await usersApi.post('/api/users/forgot-password', { email });
+    return data.data;
+  },
+
+  resetPassword: async (email: string, code: string, newPassword: string): Promise<{ message: string }> => {
+    const { data } = await usersApi.patch('/api/users/reset-password', { email, code, newPassword });
+    return data.data;
+  },
+
   // Admin
   listarUsuarios: async (filtros?: { rol?: string; is_active?: boolean }): Promise<User[]> => {
     const params = new URLSearchParams();

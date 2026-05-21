@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../../services/authService';
+import { userService } from '../../services/userService';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BotonVolver from '../../components/layout/BotonVolver';
@@ -30,7 +30,7 @@ const ResetPasswordPage = () => {
     setErrorEmail('');
     setLoadingEmail(true);
     try {
-      await authService.forgotPassword(email);
+      await userService.forgotPassword(email);
       setPaso(2);
     } catch (err: any) {
       setErrorEmail(err.response?.data?.message || 'Error al enviar el código');
@@ -46,7 +46,7 @@ const ResetPasswordPage = () => {
     if (newPassword !== confirmPassword) { setErrorReset('Las contraseñas no coinciden'); return; }
     setLoadingReset(true);
     try {
-      await authService.resetPassword(email, code, newPassword);
+      await userService.resetPassword(email, code, newPassword);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err: any) {

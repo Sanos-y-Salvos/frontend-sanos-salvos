@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
-import { authService } from '../../services/authService';
 import { regionService } from '../../services/regionService';
 import { validateField } from '../../utils/validators';
 import type { User } from '../../types';
@@ -236,7 +235,7 @@ const PerfilPage = () => {
 
     setLoadingContrasena(true);
     try {
-      const result = await authService.cambiarContrasena(contrasenaActual, contrasenaNueva);
+      const result = await userService.cambiarContrasena(contrasenaActual, contrasenaNueva);
       setPassErrors({});
       setTouchedPass({});
       // Mostrar éxito inline en el campo de contraseña actual (usamos passErrors como canal)
