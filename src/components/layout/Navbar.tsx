@@ -37,6 +37,9 @@ const Navbar = () => {
           <button onClick={() => navigate('/soporte')} className="text-sm text-gray-600 hover:text-blue-600 transition">
             Soporte
           </button>
+          <button onClick={() => navigate('/mapa')} className="text-sm text-gray-600 hover:text-blue-600 transition">
+            🗺️ Mapa
+          </button>
           {isAuthenticated && esAdmin && (
             <button onClick={() => navigate('/admin')} className="text-sm font-medium text-orange-600 hover:text-orange-700 transition">
               Panel de control
@@ -98,6 +101,9 @@ const Navbar = () => {
           </button>
           <button onClick={() => { navigate('/soporte'); setMenuAbierto(false); }} className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 transition py-1">
             Soporte
+          </button>
+          <button onClick={() => { navigate('/mapa'); setMenuAbierto(false); }} className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 transition py-1">
+            🗺️ Mapa
           </button>
           {isAuthenticated && esAdmin && (
             <button onClick={() => { navigate('/admin'); setMenuAbierto(false); }} className="block w-full text-left text-sm font-medium text-orange-600 hover:text-orange-700 transition py-1">
