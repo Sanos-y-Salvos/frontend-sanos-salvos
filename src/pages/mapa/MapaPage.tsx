@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
-import L from 'leaflet'
+import { MapContainer, TileLayer, Marker, divIcon } from 'react-leaflet'
 import { useNavigate } from 'react-router-dom'
 import { obtenerPuntosCercanos } from '../../services/localizacionService'
 import type { PuntoMapa } from '../../types'
@@ -10,14 +9,14 @@ import 'leaflet/dist/leaflet.css'
 const CENTRO_DEFAULT: [number, number] = [-36.8201, -73.0444]
 const RADIO_DEFAULT = 5000
 
-const iconoRojo = L.divIcon({
+const iconoRojo = divIcon({
   className: 'marcador-rojo',
   html: '<div style="background:#ef4444;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 })
 
-const iconoVerde = L.divIcon({
+const iconoVerde = divIcon({
   className: 'marcador-verde',
   html: '<div style="background:#22c55e;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
   iconSize: [16, 16],
@@ -161,6 +160,13 @@ export default function MapaPage() {
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wide">Ubicación</p>
                     <p className="text-gray-700 text-sm">{puntoSeleccionado.direccion_aproximada}</p>
+                  </div>
+                )}
+
+                {puntoSeleccionado.especie && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Especie</p>
+                    <p className="text-gray-700 text-sm">{puntoSeleccionado.especie}</p>
                   </div>
                 )}
 

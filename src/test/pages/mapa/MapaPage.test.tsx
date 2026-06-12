@@ -41,10 +41,12 @@ const mockPuntos = [
     reporte_id: 'reporte-uuid-1',
     tipo_reporte: 'PERDIDA',
     nombre_mascota: 'Firulais',
+    especie: 'PERRO',
     latitud: -36.826992,
     longitud: -73.049771,
     direccion_aproximada: 'Concepción, Chile',
-    descripcion_lugar: 'Cerca del parque',
+    descripcion: 'Cerca del parque',
+    codigo_chip: null,
     foto_url: 'http://localhost:3003/uploads/foto1.jpg',
   },
   {
@@ -52,10 +54,12 @@ const mockPuntos = [
     reporte_id: 'reporte-uuid-2',
     tipo_reporte: 'ENCONTRADA',
     nombre_mascota: 'Luna',
+    especie: 'GATO',
     latitud: -36.830000,
     longitud: -73.055000,
     direccion_aproximada: 'San Pedro, Chile',
-    descripcion_lugar: null,
+    descripcion: null,
+    codigo_chip: null,
     foto_url: null,
   },
 ]
@@ -275,6 +279,16 @@ describe('MapaPage', () => {
     await userEvent.click(screen.getAllByTestId('marcador')[1])
     await waitFor(() => {
       expect(screen.getByTestId('panel-detalle')).toHaveTextContent('ENCONTRADA')
+    })
+  })
+
+  it('muestra la especie en el panel de detalle', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('PERRO')
     })
   })
 
