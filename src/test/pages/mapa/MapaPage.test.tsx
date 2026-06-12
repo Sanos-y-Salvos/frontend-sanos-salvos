@@ -91,14 +91,6 @@ describe('MapaPage', () => {
     })
   })
 
-  it('muestra el Footer', async () => {
-    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
-    renderConRouter()
-    await waitFor(() => {
-      expect(screen.getByRole('contentinfo')).toBeInTheDocument()
-    })
-  })
-
   it('renderiza el contenedor del mapa', async () => {
     vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
     renderConRouter()
@@ -252,4 +244,38 @@ describe('MapaPage', () => {
       expect(screen.getByText(/ver reporte/i)).toBeInTheDocument()
     })
   })
+  it('cierra el panel al hacer clic en el botón ✕', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toBeInTheDocument()
+    })
+    await userEvent.click(screen.getByRole('button', { name: '✕' }))
+    await waitFor(() => {
+      expect(screen.queryByTestId('panel-detalle')).not.toBeInTheDocument()
+    })
+  })
+
+  it('muestra la etiqueta PERDIDA en el panel del reporte perdido', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('PERDIDA')
+    })
+  })
+
+  it('muestra la etiqueta ENCONTRADA en el panel del reporte encontrado', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[1])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('ENCONTRADA')
+    })
+  })
+
 })

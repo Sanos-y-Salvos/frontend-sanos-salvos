@@ -60,3 +60,16 @@ export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
 }
+
+export interface PuntoMapa {
+  id: string
+  reporte_id: string
+  tipo_reporte: 'PERDIDA' | 'ENCONTRADA'
+  nombre_mascota: string | null
+  latitud: number
+  longitud: number
+  direccion_aproximada: string | null
+  descripcion: string | null
+  codigo_chip: string | null
+  foto_url: string | null
+}
