@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, divIcon } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import L from 'leaflet'
 import { useNavigate } from 'react-router-dom'
 import { obtenerPuntosCercanos } from '../../services/localizacionService'
 import type { PuntoMapa } from '../../types'
 import Navbar from '../../components/layout/Navbar'
-import Footer from '../../components/layout/Footer'
 import 'leaflet/dist/leaflet.css'
 
 const CENTRO_DEFAULT: [number, number] = [-36.8201, -73.0444]
 const RADIO_DEFAULT = 5000
 
-const iconoRojo = divIcon({
+const iconoRojo = L.divIcon({
   className: 'marcador-rojo',
   html: '<div style="background:#ef4444;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 })
 
-const iconoVerde = divIcon({
+const iconoVerde = L.divIcon({
   className: 'marcador-verde',
   html: '<div style="background:#22c55e;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
   iconSize: [16, 16],
@@ -62,7 +62,6 @@ export default function MapaPage() {
       <div className="flex-1 flex items-center justify-center text-gray-500">
         Cargando mapa...
       </div>
-      <Footer />
     </div>
   )
 
@@ -72,7 +71,6 @@ export default function MapaPage() {
       <div className="flex-1 flex items-center justify-center text-red-600">
         {error}
       </div>
-      <Footer />
     </div>
   )
 
@@ -166,10 +164,17 @@ export default function MapaPage() {
                   </div>
                 )}
 
-                {puntoSeleccionado.descripcion_lugar && (
+                {puntoSeleccionado.descripcion && (
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wide">Descripción</p>
-                    <p className="text-gray-700 text-sm">{puntoSeleccionado.descripcion_lugar}</p>
+                    <p className="text-gray-700 text-sm">{puntoSeleccionado.descripcion}</p>
+                  </div>
+                )}
+
+                {puntoSeleccionado.codigo_chip && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Código de chip</p>
+                    <p className="text-gray-700 text-sm font-mono">{puntoSeleccionado.codigo_chip}</p>
                   </div>
                 )}
               </div>
@@ -185,7 +190,6 @@ export default function MapaPage() {
         )}
       </div>
 
-      <Footer />
     </div>
   )
 }
