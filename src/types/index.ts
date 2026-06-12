@@ -66,6 +66,7 @@ export interface PuntoMapa {
   reporte_id: string
   tipo_reporte: 'PERDIDA' | 'ENCONTRADA'
   nombre_mascota: string | null
+  especie: string | null
   latitud: number
   longitud: number
   direccion_aproximada: string | null

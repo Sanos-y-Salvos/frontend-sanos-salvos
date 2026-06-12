@@ -164,6 +164,13 @@ export default function MapaPage() {
                   </div>
                 )}
 
+                {puntoSeleccionado.especie && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Especie</p>
+                    <p className="text-gray-700 text-sm">{puntoSeleccionado.especie}</p>
+                  </div>
+                )}
+
                 {puntoSeleccionado.descripcion && (
                   <div>
                     <p className="text-xs text-gray-400 uppercase tracking-wide">Descripción</p>
