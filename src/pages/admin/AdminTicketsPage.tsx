@@ -209,6 +209,11 @@ const AdminTicketsPage = () => {
               )}
               {ticketSeleccionado.estado !== 'cerrado' && (
                 <div className="space-y-2">
+                  {!ticketSeleccionado.user_id && ticketSeleccionado.email_contacto && (
+                    <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      El usuario no está registrado. Tu respuesta se enviará al correo <strong>{ticketSeleccionado.email_contacto}</strong>.
+                    </p>
+                  )}
                   <textarea
                     value={respuesta}
                     onChange={(e) => setRespuesta(e.target.value)}
