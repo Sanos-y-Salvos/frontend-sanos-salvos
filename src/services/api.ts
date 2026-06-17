@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 // =======================================================
 // 1. MICROSERVICIOS YA MOGRADOS AL API GATEWAY
 // =======================================================
-const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL ?? 'http://localhost:8080';
+const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL ?? 'http://localhost:8000';
 
 export const localizacionApi = axios.create({
   baseURL: GATEWAY_URL, 
