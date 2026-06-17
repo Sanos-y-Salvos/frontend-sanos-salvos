@@ -148,15 +148,7 @@ const NuevoTicketPage = () => {
                 />
               </div>
 
-              {!isAuthenticated && (
-                <p className="text-xs text-gray-400">
-                  ¿Tienes cuenta?{' '}
-                  <Link to="/login" className="text-blue-500 hover:underline">Inicia sesión</Link>
-                  {' '}para vincular el ticket a tu perfil automáticamente.
-                </p>
-              )}
-
-              <Button type="submit" disabled={loadingTicket || !categoria || !descripcion} fullWidth className="py-3">
+<Button type="submit" disabled={loadingTicket || !categoria || !descripcion} fullWidth className="py-3">
                 {loadingTicket ? 'Creando ticket...' : 'Enviar ticket'}
               </Button>
             </form>
