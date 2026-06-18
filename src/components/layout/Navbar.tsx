@@ -34,6 +34,9 @@ const Navbar = () => {
           <button onClick={() => navigate('/about')} className="text-sm text-gray-600 hover:text-blue-600 transition">
             ¿Quiénes somos?
           </button>
+          <button onClick={() => navigate('/reportes')} className="text-sm text-gray-600 hover:text-blue-600 transition">
+            📋 Reportes
+          </button>
           <button onClick={() => navigate('/soporte')} className="text-sm text-gray-600 hover:text-blue-600 transition">
             Soporte
           </button>
@@ -98,6 +101,9 @@ const Navbar = () => {
           </button>
           <button onClick={() => { navigate('/about'); setMenuAbierto(false); }} className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 transition py-1">
             ¿Quiénes somos?
+          </button>
+          <button onClick={() => { navigate('/reportes'); setMenuAbierto(false); }} className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 transition py-1">
+            📋 Reportes
           </button>
           <button onClick={() => { navigate('/soporte'); setMenuAbierto(false); }} className="block w-full text-left text-sm text-gray-600 hover:text-blue-600 transition py-1">
             Soporte

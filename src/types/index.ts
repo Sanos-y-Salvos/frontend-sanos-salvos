@@ -74,3 +74,22 @@ export interface PuntoMapa {
   codigo_chip: string | null
   foto_url: string | null
 }
+
+export interface Reporte {
+  id: string
+  nombreMascota: string
+  especie: string
+  color: string
+  tamanio: string
+  tipo: 'PERDIDA' | 'ENCONTRADA'
+  estado: string
+  fechaPublicacion: string
+  fechaActualizacion: string
+  ubicacionLatitud: number
+  ubicacionLongitud: number
+  direccionReferencia?: string
+  usuarioId: string
+  codigoChip?: string
+  descripcion?: string
+  fotos: { id: string; nombreArchivo: string; urlRelativa: string }[]
+}
