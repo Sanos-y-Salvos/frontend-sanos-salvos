@@ -2,13 +2,13 @@ import axios from 'axios';
 import { storage } from '../utils/storage';
 
 // =======================================================
-// 1. MICROSERVICIOS YA MOGRADOS AL API GATEWAY
+// 1. MICROSERVICIOS YA MIGRADOS AL API GATEWAY
 // =======================================================
 const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL ?? 'http://localhost:8000';
 
 export const localizacionApi = axios.create({
-  baseURL: GATEWAY_URL, 
-  // Ojo: En tus servicios de localización, ahora tus fetch deben 
+  baseURL: GATEWAY_URL,
+  // Ojo: En tus servicios de localización, ahora tus fetch deben
   // empezar por el prefijo que definiste en el gateway (ej: '/api/localizacion/...')
 });
 
@@ -17,25 +17,22 @@ export const reportesApi = axios.create({
   // Igual aquí, usar el prefijo del gateway (ej: '/api/mascotas/...')
 });
 
-// =======================================================
-// 2. MICROSERVICIOS PENDIENTES (CONEXIÓN DIRECTA)
-// =======================================================
-// TODO A FUTURO: Cuando estos microservicios se agreguen al gateway.config.yml,
-// debes cambiar su 'baseURL' para que usen GATEWAY_URL y eliminar sus variables de entorno.
+// auth y users ahora pasan por: frontend -> API Gateway -> BFF -> ms-auth/ms-users
 export const authApi = axios.create({
-  baseURL: import.meta.env.VITE_MS_AUTH_URL ?? '',
+  baseURL: GATEWAY_URL,
 });
 
 export const usersApi = axios.create({
-  baseURL: import.meta.env.VITE_MS_USERS_URL ?? '',
+  baseURL: GATEWAY_URL,
 });
 
+// soporte ahora también pasa por: frontend -> API Gateway -> BFF -> ms-soporte
 export const soporteApi = axios.create({
-  baseURL: import.meta.env.VITE_MS_SOPORTE_URL ?? '',
+  baseURL: GATEWAY_URL,
 });
 
 // =======================================================
-// 3. INTERCEPTOR DE AUTENTICACIÓN
+// 2. INTERCEPTOR DE AUTENTICACIÓN
 // =======================================================
 // Interceptor para agregar token en cada petición
 const addAuthInterceptor = (instance: typeof authApi) => {

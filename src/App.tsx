@@ -20,6 +20,8 @@ import AdminUsuariosPage from './pages/admin/AdminUsuariosPage';
 
 import MapaPage from './pages/mapa/MapaPage'
 import ReportesPage from './pages/reportes/ReportesPage'
+import NuevoReportePage from './pages/reportes/NuevoReportePage'
+import ReporteDetallePage from './pages/reportes/ReporteDetallePage'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -52,6 +54,8 @@ const AppRoutes = () => {
       <Route path="/tickets" element={<TicketsPage />} />
       <Route path="/tickets/nuevo" element={<NuevoTicketPage />} />
       <Route path="/reportes" element={<ReportesPage />} />
+      <Route path="/reportes/nuevo" element={<PrivateRoute><NuevoReportePage /></PrivateRoute>} />
+      <Route path="/reportes/:id" element={<PrivateRoute><ReporteDetallePage /></PrivateRoute>} />
       <Route path="/mapa" element={<MapaPage />} />
       <Route path="/perfil" element={<PrivateRoute><PerfilPage /></PrivateRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { listarReportes } from '../../services/reporteService'
 import type { Reporte } from '../../types'
 import Navbar from '../../components/layout/Navbar'
+import { useAuth } from '../../hooks/useAuth'
 
 const MS_MASCOTAS_URL = import.meta.env.VITE_MS_MASCOTAS_URL ?? 'http://localhost:3003'
 
@@ -10,6 +11,7 @@ const TIPOS = ['', 'PERDIDA', 'ENCONTRADA']
 const ESPECIES = ['', 'PERRO', 'GATO', 'AVE', 'CONEJO', 'HAMSTER', 'REPTIL', 'OTRO']
 
 export default function ReportesPage() {
+  const { isAuthenticated } = useAuth()
   const [reportes, setReportes] = useState<Reporte[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +55,17 @@ export default function ReportesPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Reportes de mascotas</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Reportes de mascotas</h1>
+          {isAuthenticated && (
+            <Link
+              to="/reportes/nuevo"
+              className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              + Reportar mascota
+            </Link>
+          )}
+        </div>
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-3 mb-6">
