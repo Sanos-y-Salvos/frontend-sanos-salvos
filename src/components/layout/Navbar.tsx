@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useAdminMode } from '../../context/AdminModeContext';
 import {
   PawPrint, Menu, X, Map, ClipboardList, HeadphonesIcon,
-  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown,
+  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -19,11 +20,12 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const { isAdminMode, isEmployee, setAdminMode } = useAdminMode();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [scrolled, setScrolled]       = useState(false);
   const [userMenu, setUserMenu]       = useState(false);
 
-  const esAdmin = user?.rol === 'administrador' || user?.rol === 'superadmin';
+  const esAdmin = user?.rol === 'administrador' || user?.rol === 'superadmin' || user?.rol === 'moderador';
 
   const nombreMostrar = user?.ciudadano
     ? `${user.ciudadano.primer_nombre} ${user.ciudadano.apellido_paterno}`
@@ -48,7 +50,24 @@ const Navbar = () => {
   return (
     <nav className={`sticky top-0 z-40 transition-all duration-300 ${
       scrolled ? 'glass border-b border-slate-200/60 shadow-sm' : 'bg-white border-b border-slate-100'
-    }`}>
+    } ${isEmployee && isAdminMode ? 'md:hidden' : ''}`}>
+
+      {/* Banner "Volver al panel" — solo visible cuando empleado está en modo usuario */}
+      {isEmployee && !isAdminMode && (
+        <div className="hidden md:flex bg-slate-900 text-white text-xs items-center justify-between px-5 py-2">
+          <span className="flex items-center gap-1.5 text-slate-400">
+            <LayoutDashboard className="w-3 h-3" />
+            Vista de usuario activa
+          </span>
+          <button
+            onClick={() => setAdminMode(true)}
+            className="flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200 transition-colors"
+          >
+            Volver al panel
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
 
         {/* Logo */}

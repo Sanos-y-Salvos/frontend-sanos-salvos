@@ -56,4 +56,16 @@ export const ticketService = {
     const { data } = await soporteApi.post('/api/chatbot/preguntar', { pregunta });
     return data.data.respuesta;
   },
+
+  getEstadisticas: async (): Promise<{
+    total: number;
+    por_estado: { estado: string; count: number }[];
+    por_categoria: { categoria: string; count: number }[];
+    por_mes: { mes: string; count: number }[];
+    por_mes_categoria: { mes: string; categoria: string; count: number }[];
+    tiempo_resolucion: { categoria: string; dias_promedio: number }[];
+  }> => {
+    const { data } = await soporteApi.get('/api/tickets/estadisticas');
+    return data.data;
+  },
 };

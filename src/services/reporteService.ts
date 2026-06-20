@@ -33,6 +33,22 @@ export interface NuevoReporte {
   fotos?: File[]
 }
 
+export interface EstadisticasReportes {
+  total: number;
+  por_tipo:        { tipo: string;    count: number }[];
+  por_estado:      { estado: string;  count: number }[];
+  por_especie:     { especie: string; count: number }[];
+  por_tamanio:     { tamanio: string; count: number }[];
+  por_mes:         { mes: string; count: number }[];
+  por_mes_tipo:    { mes: string; tipo: string; count: number }[];
+  por_mes_especie: { mes: string; especie: string; count: number }[];
+}
+
+export const getEstadisticasReportes = async (): Promise<EstadisticasReportes> => {
+  const { data } = await reportesApi.get<{ data: EstadisticasReportes }>('/api/mascotas/reportes/estadisticas');
+  return data.data;
+};
+
 export const crearReporte = async (reporte: NuevoReporte): Promise<Reporte> => {
   const formData = new FormData()
   formData.append('nombreMascota', reporte.nombreMascota)

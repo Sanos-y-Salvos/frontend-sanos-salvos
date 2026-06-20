@@ -15,13 +15,15 @@ const LoginPage = () => {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
+  const EMPLOYEE_ROLES = ['moderador', 'administrador', 'superadmin'];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     try {
-      await login(email, password);
-      navigate('/');
+      const loggedUser = await login(email, password);
+      navigate(EMPLOYEE_ROLES.includes(loggedUser.rol) ? '/admin' : '/');
     } catch {
       setError('Correo o contraseña incorrectos');
     } finally {

@@ -48,7 +48,7 @@ const userDesdeCache = (cached: Awaited<ReturnType<typeof authService.getMe>>): 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -87,18 +87,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const tokens: AuthTokens = await authService.login(email, password);
     storage.setTokens(tokens.accessToken, tokens.refreshToken);
     try {
-      // 1. Fuente de verdad: ms-users
       const perfil = await userService.obtenerPerfil();
       setUser(perfil);
+      return perfil;
     } catch {
-      // 2. ms-users caído — Redis vía ms-auth
       try {
         const cached = await authService.getMe();
-        setUser(userDesdeCache(cached));
+        const u = userDesdeCache(cached);
+        setUser(u);
+        return u;
       } catch {
         storage.clearTokens();
         throw new Error('No se pudo obtener los datos del usuario');

@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { PawPrint, MapPin, Clock, Globe, ArrowRight } from 'lucide-react';
+import { useAdminMode } from '../../context/AdminModeContext';
 
 const Footer = () => {
   const navigate = useNavigate();
+  const { isAdminMode } = useAdminMode();
+  if (isAdminMode) return null;
 
   return (
     <footer className="bg-slate-950 text-slate-400">

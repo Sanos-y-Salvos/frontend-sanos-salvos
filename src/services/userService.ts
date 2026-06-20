@@ -76,4 +76,20 @@ export const userService = {
     const { data } = await usersApi.patch(`/api/users/admin/usuarios/${userId}/datos`, datos);
     return data.data;
   },
+
+  getEstadisticas: async (): Promise<{
+    total: number;
+    activos: number;
+    por_region: { region: string; count: number }[];
+    top_comunas: { comuna: string; count: number }[];
+    por_tipo: { tipo: string; count: number }[];
+    por_tipo_institucion: { tipo_institucion: string; count: number }[];
+    por_rol: { rol: string; count: number }[];
+    por_mes: { mes: string; count: number }[];
+    por_mes_tipo: { mes: string; tipo: string; count: number }[];
+    por_mes_rol: { mes: string; rol: string; count: number }[];
+  }> => {
+    const { data } = await usersApi.get('/api/users/admin/estadisticas');
+    return data.data;
+  },
 };
