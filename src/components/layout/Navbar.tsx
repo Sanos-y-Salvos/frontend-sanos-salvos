@@ -4,8 +4,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAdminMode } from '../../context/AdminModeContext';
 import {
   PawPrint, Menu, X, Map, ClipboardList, HeadphonesIcon,
-  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown, ChevronRight,
+  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown, ChevronRight, MessageCircle,
 } from 'lucide-react';
+import { useMensajeria } from '../../context/MensajeriaContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const navLinks = [
@@ -25,6 +26,7 @@ const Navbar = () => {
   const [scrolled, setScrolled]       = useState(false);
   const [userMenu, setUserMenu]       = useState(false);
 
+  const { notificaciones } = useMensajeria();
   const esAdmin = user?.rol === 'administrador' || user?.rol === 'superadmin' || user?.rol === 'moderador';
 
   const nombreMostrar = user?.ciudadano
@@ -96,6 +98,24 @@ const Navbar = () => {
               {label}
             </button>
           ))}
+          {isAuthenticated && (
+            <button
+              onClick={() => navigate('/mensajes')}
+              className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 flex items-center gap-1.5 ${
+                isActive('/mensajes')
+                  ? 'bg-brand-50 text-brand-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              Mensajes
+              {notificaciones > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                  {notificaciones}
+                </span>
+              )}
+            </button>
+          )}
           {isAuthenticated && esAdmin && (
             <button
               onClick={() => navigate('/admin')}
@@ -212,6 +232,20 @@ const Navbar = () => {
                   {label}
                 </button>
               ))}
+              {isAuthenticated && (
+                <button
+                  onClick={() => navigate('/mensajes')}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Mensajes
+                  {notificaciones > 0 && (
+                    <span className="ml-auto min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                      {notificaciones}
+                    </span>
+                  )}
+                </button>
+              )}
               {isAuthenticated && esAdmin && (
                 <button
                   onClick={() => navigate('/admin')}

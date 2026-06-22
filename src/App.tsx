@@ -18,6 +18,7 @@ import ChatbotWidget from './components/ChatbotWidget';
 import AdminPage from './pages/admin/AdminPage';
 import AdminTicketsPage from './pages/admin/AdminTicketsPage';
 import AdminUsuariosPage from './pages/admin/AdminUsuariosPage';
+import AdminMensajesPage from './pages/admin/AdminMensajesPage';
 import AnalisisUsuariosPage from './pages/admin/analisis/AnalisisUsuariosPage';
 import AnalisisMascotasPage from './pages/admin/analisis/AnalisisMascotasPage';
 import AnalisisTicketsPage from './pages/admin/analisis/AnalisisTicketsPage';
@@ -27,6 +28,9 @@ import MapaPage from './pages/mapa/MapaPage';
 import ReportesPage from './pages/reportes/ReportesPage';
 import NuevoReportePage from './pages/reportes/NuevoReportePage';
 import ReporteDetallePage from './pages/reportes/ReporteDetallePage';
+import SalasPage from './pages/mensajes/SalasPage';
+import ChatPage from './pages/mensajes/ChatPage';
+import { MensajeriaProvider } from './context/MensajeriaContext';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -69,10 +73,13 @@ const AppRoutes = () => {
           <Route path="/reportes/nuevo" element={<PrivateRoute><NuevoReportePage /></PrivateRoute>} />
           <Route path="/reportes/:id" element={<PrivateRoute><ReporteDetallePage /></PrivateRoute>} />
           <Route path="/mapa" element={<MapaPage />} />
+          <Route path="/mensajes" element={<PrivateRoute><SalasPage /></PrivateRoute>} />
+          <Route path="/mensajes/:salaId" element={<PrivateRoute><ChatPage /></PrivateRoute>} />
           <Route path="/perfil" element={<PrivateRoute><PerfilPage /></PrivateRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           <Route path="/admin/tickets" element={<AdminRoute><AdminTicketsPage /></AdminRoute>} />
           <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuariosPage /></AdminRoute>} />
+          <Route path="/admin/mensajes" element={<AdminRoute><AdminMensajesPage /></AdminRoute>} />
           <Route path="/admin/analisis/usuarios" element={<AdminRoute><AnalisisUsuariosPage /></AdminRoute>} />
           <Route path="/admin/analisis/mascotas" element={<AdminRoute><AnalisisMascotasPage /></AdminRoute>} />
           <Route path="/admin/analisis/tickets" element={<AdminRoute><AnalisisTicketsPage /></AdminRoute>} />
@@ -88,9 +95,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AdminModeProvider>
-          <AppRoutes />
-        </AdminModeProvider>
+        <MensajeriaProvider>
+          <AdminModeProvider>
+            <AppRoutes />
+          </AdminModeProvider>
+        </MensajeriaProvider>
       </AuthProvider>
     </BrowserRouter>
   );

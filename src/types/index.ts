@@ -75,6 +75,46 @@ export interface PuntoMapa {
   foto_url: string | null
 }
 
+export interface Match {
+  id: string;
+  reporte_a_id: string;
+  reporte_b_id: string;
+  score: number;
+  estado: 'PENDIENTE' | 'ACEPTADO' | 'RECHAZADO';
+  auto_confirmado: boolean;
+  creado_en: string;
+  actualizado_en: string;
+}
+
+export interface Sala {
+  id: string;
+  matchId: string;
+  reporteAId: string;
+  reporteBId: string;
+  usuarioAId: string;
+  usuarioBId: string;
+  estado: 'ACTIVA' | 'CONGELADA' | 'CLAUSURADA';
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export interface SalaDenuncia {
+  id: string;
+  salaId: string;
+  reportadoPor: string;
+  motivo?: string;
+  creadoEn: string;
+}
+
+export interface Mensaje {
+  id: string;
+  salaId: string;
+  autorId: string;
+  emailAutor: string;
+  contenido: string;
+  creadoEn: string;
+}
+
 export interface Reporte {
   id: string
   nombreMascota: string

@@ -6,13 +6,22 @@ export interface FiltrosReporte {
   estado?: string
   especie?: string
   color?: string
+  page?: number
+  limit?: number
 }
 
-export const listarReportes = async (filtros?: FiltrosReporte): Promise<Reporte[]> => {
-  const { data } = await reportesApi.get<{ data: Reporte[] }>('/api/mascotas/reportes', {
+export interface ReportesPaginados {
+  data: Reporte[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+export const listarReportes = async (filtros?: FiltrosReporte): Promise<ReportesPaginados> => {
+  const { data } = await reportesApi.get<ReportesPaginados>('/api/mascotas/reportes', {
     params: filtros,
   })
-  return data.data
+  return data
 }
 
 export const obtenerReporte = async (id: string): Promise<Reporte> => {
@@ -48,6 +57,11 @@ export const getEstadisticasReportes = async (): Promise<EstadisticasReportes> =
   const { data } = await reportesApi.get<{ data: EstadisticasReportes }>('/api/mascotas/reportes/estadisticas');
   return data.data;
 };
+
+export const cambiarEstadoReporte = async (id: string, estado: string): Promise<Reporte> => {
+  const { data } = await reportesApi.patch<{ data: Reporte }>(`/api/mascotas/reportes/${id}/estado`, { estado })
+  return data.data
+}
 
 export const crearReporte = async (reporte: NuevoReporte): Promise<Reporte> => {
   const formData = new FormData()
