@@ -42,6 +42,7 @@ export interface NuevoReporte {
   direccionReferencia?: string
   descripcion?: string
   fotos?: File[]
+  codigoChip?: string
 }
 
 export interface EstadisticasReportes {
@@ -77,6 +78,7 @@ export const crearReporte = async (reporte: NuevoReporte): Promise<Reporte> => {
   if (reporte.codigoChip) formData.append('codigoChip', reporte.codigoChip)
   if (reporte.direccionReferencia) formData.append('direccionReferencia', reporte.direccionReferencia)
   if (reporte.descripcion) formData.append('descripcion', reporte.descripcion)
+  if (reporte.codigoChip) formData.append('codigoChip', reporte.codigoChip)
   reporte.fotos?.forEach((foto) => formData.append('fotos', foto))
 
   const { data } = await reportesApi.post<{ data: Reporte }>('/api/mascotas/reportes', formData, {

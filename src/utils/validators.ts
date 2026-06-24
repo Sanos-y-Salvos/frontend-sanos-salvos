@@ -45,7 +45,7 @@ export const validateField = (field: string, value: string, extra?: { password?:
       if (value && !esNombreValido(value)) return 'Mínimo 3 letras, sin números ni símbolos';
       return '';
     case 'apellido_paterno':
-      if (!value) return 'El apellido paterno es requerido';
+      if (!value) return 'El primer apellido es requerido';
       if (!esNombreValido(value)) return 'Mínimo 3 letras, sin números ni símbolos';
       return '';
     case 'apellido_materno':

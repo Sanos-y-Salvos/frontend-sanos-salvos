@@ -61,6 +61,7 @@ const NuevoReportePage = () => {
   const [color, setColor]                       = useState('');
   const [tamanio, setTamanio]                   = useState('');
   const [tipo, setTipo]                         = useState('');
+  const [codigoChip, setCodigoChip]             = useState('');
   const [posicion, setPosicion]                 = useState<[number, number] | null>(null);
   const [centroMapa, setCentroMapa]             = useState<[number, number]>(CENTRO_DEFAULT);
   const [direccionReferencia, setDireccionReferencia] = useState('');
@@ -103,7 +104,11 @@ const NuevoReportePage = () => {
     const [lat, lng] = posicion;
     setLoading(true);
     try {
+<<<<<<< HEAD
       const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, codigoChip: codigoChip.trim() || undefined, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos });
+=======
+      const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos, codigoChip: codigoChip || undefined });
+>>>>>>> 9d28460bb935c8082256404b7e4c703e17758d4f
       navigate(`/reportes/${reporte.id}`);
     } catch {
       setError('Error al crear el reporte. Intenta nuevamente.');
@@ -204,6 +209,7 @@ const NuevoReportePage = () => {
                 onChange={(e) => setColor(e.target.value)}
                 placeholder="Ej: Marrón con manchas blancas" required
               />
+<<<<<<< HEAD
               <div className="flex flex-col gap-1">
                 <Input
                   label="Código de chip"
@@ -217,6 +223,14 @@ const NuevoReportePage = () => {
                   Si la mascota tiene microchip, ingrésalo. Una coincidencia de chip genera match automático.
                 </p>
               </div>
+=======
+              <Input
+                label="Código de chip"
+                type="text" value={codigoChip}
+                onChange={(e) => setCodigoChip(e.target.value)}
+                placeholder="Ej: 985112345678901 (Opcional)"
+              />
+>>>>>>> 9d28460bb935c8082256404b7e4c703e17758d4f
             </div>
 
             {/* Ubicación */}
