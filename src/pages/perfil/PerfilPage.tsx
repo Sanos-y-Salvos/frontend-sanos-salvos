@@ -316,8 +316,8 @@ const PerfilPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <Field label="Primer nombre"   value={perfilData.ciudadano.primer_nombre} />
                       <Field label="Segundo nombre"  value={perfilData.ciudadano.segundo_nombre} />
-                      <Field label="Apellido paterno" value={perfilData.ciudadano.apellido_paterno} />
-                      <Field label="Apellido materno" value={perfilData.ciudadano.apellido_materno} />
+                      <Field label="Primer apellido"  value={perfilData.ciudadano.apellido_paterno} />
+                      <Field label="Segundo apellido" value={perfilData.ciudadano.apellido_materno} />
                       <Field label="RUN"              value={perfilData.ciudadano.run} />
                       <Field label="Teléfono"         value={perfilData.telefono} />
                       <Field label="Región"           value={perfilData.region} />
@@ -359,11 +359,11 @@ const PerfilPage = () => {
                           error={err('segundo_nombre')} />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <Input label="Apellido paterno" value={apellidoPaterno}
+                        <Input label="Primer apellido" value={apellidoPaterno}
                           onChange={e => onChange('apellido_paterno', e.target.value, setApellidoPaterno)}
                           onBlur={e => touch('apellido_paterno', e.target.value)}
                           error={err('apellido_paterno')} />
-                        <Input label="Apellido materno" value={apellidoMaterno}
+                        <Input label="Segundo apellido" value={apellidoMaterno}
                           onChange={e => onChange('apellido_materno', e.target.value, setApellidoMaterno)}
                           onBlur={e => touch('apellido_materno', e.target.value)}
                           error={err('apellido_materno')} />

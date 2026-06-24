@@ -351,14 +351,14 @@ const RegisterPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input
-                      label={<>Ap. paterno <Req /></>}
+                      label={<>Primer apellido <Req /></>}
                       type="text" value={apellidoPaterno}
                       onChange={(e) => onChange('apellido_paterno', e.target.value, setApellidoPaterno)}
                       onBlur={(e) => touch('apellido_paterno', e.target.value)}
                       error={err('apellido_paterno')}
                     />
                     <Input
-                      label="Ap. materno"
+                      label="Segundo apellido"
                       type="text" value={apellidoMaterno}
                       onChange={(e) => onChange('apellido_materno', e.target.value, setApellidoMaterno)}
                       onBlur={(e) => touch('apellido_materno', e.target.value)}

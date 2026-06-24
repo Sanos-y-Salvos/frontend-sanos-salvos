@@ -327,8 +327,8 @@ const AdminUsuariosPage = () => {
                                             {[
                                                 ['Primer nombre',    u.ciudadano.primer_nombre],
                                                 ['Segundo nombre',   u.ciudadano.segundo_nombre   || '-'],
-                                                ['Apellido paterno', u.ciudadano.apellido_paterno],
-                                                ['Apellido materno', u.ciudadano.apellido_materno || '-'],
+                                                ['Primer apellido',  u.ciudadano.apellido_paterno],
+                                                ['Segundo apellido', u.ciudadano.apellido_materno || '-'],
                                                 ['RUN',              u.ciudadano.run],
                                             ].map(([label, value]) => (
                                                 <div key={label}>
@@ -402,8 +402,8 @@ const AdminUsuariosPage = () => {
                                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                                                 <Input label="Primer nombre"    value={formEditar.primer_nombre}    onChange={e => setFormEditar(prev => ({ ...prev, primer_nombre:    e.target.value }))} />
                                                 <Input label="Segundo nombre"   value={formEditar.segundo_nombre}   onChange={e => setFormEditar(prev => ({ ...prev, segundo_nombre:   e.target.value }))} />
-                                                <Input label="Apellido paterno" value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
-                                                <Input label="Apellido materno" value={formEditar.apellido_materno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_materno: e.target.value }))} />
+                                                <Input label="Primer apellido"  value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
+                                                <Input label="Segundo apellido" value={formEditar.apellido_materno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_materno: e.target.value }))} />
                                             </div>
                                         )}
                                         {u.institucion && (
@@ -736,11 +736,11 @@ const AdminUsuariosPage = () => {
                                                     error={errCrear('segundo_nombre')} />
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <Input label="Apellido paterno *" value={formCrear.apellido_paterno}
+                                                <Input label="Primer apellido *" value={formCrear.apellido_paterno}
                                                     onChange={e => changeCrear('apellido_paterno', e.target.value)}
                                                     onBlur={e => blurCrear('apellido_paterno', e.target.value)}
                                                     error={errCrear('apellido_paterno')} />
-                                                <Input label="Apellido materno" value={formCrear.apellido_materno}
+                                                <Input label="Segundo apellido" value={formCrear.apellido_materno}
                                                     onChange={e => changeCrear('apellido_materno', e.target.value)}
                                                     onBlur={e => blurCrear('apellido_materno', e.target.value)}
                                                     error={errCrear('apellido_materno')} />

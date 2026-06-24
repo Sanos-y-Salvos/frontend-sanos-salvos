@@ -61,6 +61,7 @@ const NuevoReportePage = () => {
   const [color, setColor]                       = useState('');
   const [tamanio, setTamanio]                   = useState('');
   const [tipo, setTipo]                         = useState('');
+  const [codigoChip, setCodigoChip]             = useState('');
   const [posicion, setPosicion]                 = useState<[number, number] | null>(null);
   const [centroMapa, setCentroMapa]             = useState<[number, number]>(CENTRO_DEFAULT);
   const [direccionReferencia, setDireccionReferencia] = useState('');
@@ -102,7 +103,7 @@ const NuevoReportePage = () => {
     const [lat, lng] = posicion;
     setLoading(true);
     try {
-      const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos });
+      const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos, codigoChip: codigoChip || undefined });
       navigate(`/reportes/${reporte.id}`);
     } catch {
       setError('Error al crear el reporte. Intenta nuevamente.');
@@ -202,6 +203,12 @@ const NuevoReportePage = () => {
                 type="text" value={color}
                 onChange={(e) => setColor(e.target.value)}
                 placeholder="Ej: Marrón con manchas blancas" required
+              />
+              <Input
+                label="Código de chip"
+                type="text" value={codigoChip}
+                onChange={(e) => setCodigoChip(e.target.value)}
+                placeholder="Ej: 985112345678901 (Opcional)"
               />
             </div>
 
