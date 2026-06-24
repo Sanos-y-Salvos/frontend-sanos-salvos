@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAdminMode } from '../../context/AdminModeContext';
 import {
   PawPrint, Menu, X, Map, ClipboardList, HeadphonesIcon,
-  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown, ChevronRight, MessageCircle,
+  LogIn, UserPlus, LogOut, User, LayoutDashboard, ChevronDown, ChevronRight, MessageCircle, ScrollText,
 } from 'lucide-react';
 import { useMensajeria } from '../../context/MensajeriaContext';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -166,6 +166,13 @@ const Navbar = () => {
                       <User className="w-4 h-4 text-slate-400" />
                       Mi perfil
                     </button>
+                    <button
+                      onClick={() => navigate('/mis-reportes')}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <ScrollText className="w-4 h-4 text-slate-400" />
+                      Mis reportes
+                    </button>
                     <div className="my-1 border-t border-slate-100" />
                     <button
                       onClick={handleLogout}
@@ -256,26 +263,35 @@ const Navbar = () => {
                 </button>
               )}
 
-              <div className="pt-2 border-t border-slate-100 mt-2 flex gap-2">
+              <div className="pt-2 border-t border-slate-100 mt-2 space-y-2">
                 {isAuthenticated ? (
                   <>
-                    <button
-                      onClick={() => navigate('/perfil')}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <User className="w-4 h-4" />
-                      Mi perfil
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate('/perfil')}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Mi perfil
+                      </button>
+                      <button
+                        onClick={() => navigate('/mis-reportes')}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <ScrollText className="w-4 h-4" />
+                        Mis reportes
+                      </button>
+                    </div>
                     <button
                       onClick={handleLogout}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-rose-200 text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
-                      Salir
+                      Cerrar sesión
                     </button>
                   </>
                 ) : (
-                  <>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => navigate('/login')}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
@@ -290,7 +306,7 @@ const Navbar = () => {
                       <UserPlus className="w-4 h-4" />
                       Registro
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>

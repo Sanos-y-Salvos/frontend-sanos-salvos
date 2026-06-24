@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users, UserPlus, ChevronRight, Loader2, Filter,
+  Users, UserPlus, ChevronRight, ChevronLeft, Loader2, Filter,
   User, Building2, Edit2, X, Check,
 } from 'lucide-react';
 import { userService } from '../../services/userService';
@@ -43,6 +43,43 @@ const formCrearInicial = {
     nombre_institucion: '', razon_social: '', rut: '', tipo_institucion: 'veterinaria', direccion: '',
 };
 
+const PAGE_SIZE = 12;
+
+const Paginacion = ({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) => {
+    if (totalPages <= 1) return null;
+    const pages: (number | '…')[] = [];
+    if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+        pages.push(1);
+        if (page > 3) pages.push('…');
+        for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+        if (page < totalPages - 2) pages.push('…');
+        pages.push(totalPages);
+    }
+    const btn = 'w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors';
+    return (
+        <div className="flex items-center justify-center gap-1.5 mt-8">
+            <button onClick={() => onChange(page - 1)} disabled={page === 1}
+                className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+                <ChevronLeft className="w-4 h-4" />
+            </button>
+            {pages.map((p, i) =>
+                p === '…'
+                    ? <span key={`e-${i}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
+                    : <button key={p} onClick={() => onChange(p as number)}
+                        className={`${btn} ${page === p ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                        {p}
+                      </button>
+            )}
+            <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
+                className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+                <ChevronRight className="w-4 h-4" />
+            </button>
+        </div>
+    );
+};
+
 const AvatarIcon = ({ tipo, size = 'md' }: { tipo?: string; size?: 'sm' | 'md' | 'lg' }) => {
     const sizes = { sm: 'w-4 h-4', md: 'w-5 h-5', lg: 'w-7 h-7' };
     const cls = `${sizes[size]} text-slate-400`;
@@ -65,6 +102,7 @@ const AdminUsuariosPage = () => {
     const [success, setSuccess]       = useState('');
     const [filtroRol, setFiltroRol]   = useState('');
     const [filtroEstado, setFiltroEstado] = useState('');
+    const [page, setPage]             = useState(1);
 
     // Create modal
     const [mostrarModal, setMostrarModal]       = useState(false);
@@ -90,7 +128,7 @@ const AdminUsuariosPage = () => {
     const [comunasEditar, setComunasEditar] = useState<ComunaItem[]>([]);
 
     useEffect(() => { regionService.getRegiones().then(setRegiones).catch(() => {}); }, []);
-    useEffect(() => { cargarUsuarios(); }, [filtroRol, filtroEstado]);
+    useEffect(() => { setPage(1); cargarUsuarios(); }, [filtroRol, filtroEstado]);
     useEffect(() => {
         if (formCrear.region) regionService.getComunas(formCrear.region).then(setComunasCrear).catch(() => setComunasCrear([]));
         else setComunasCrear([]);
@@ -144,7 +182,7 @@ const AdminUsuariosPage = () => {
             setUsuarioSeleccionado(user); setNuevoRol(user.rol);
             setModoEdicion(false); setErrorDetalle(''); setSuccessDetalle('');
             const form: Record<string, string> = {
-                telefono: user.telefono || '', region: user.region || '', comuna: user.comuna || '',
+                telefono: (user.telefono || '').replace(/^\+569/, ''), region: user.region || '', comuna: user.comuna || '',
             };
             if (user.ciudadano) {
                 form.primer_nombre    = user.ciudadano.primer_nombre    || '';
@@ -190,7 +228,10 @@ const AdminUsuariosPage = () => {
         if (!usuarioSeleccionado) return;
         setGuardando(true);
         try {
-            const actualizado = await userService.editarDatosUsuario(usuarioSeleccionado.id, formEditar);
+            const actualizado = await userService.editarDatosUsuario(usuarioSeleccionado.id, {
+                ...formEditar,
+                telefono: formEditar.telefono ? '+569' + formEditar.telefono : formEditar.telefono,
+            });
             setUsuarioSeleccionado(actualizado); setModoEdicion(false);
             setSuccessDetalle('Datos actualizados correctamente'); cargarUsuarios();
         } catch (err: any) {
@@ -220,7 +261,7 @@ const AdminUsuariosPage = () => {
         try {
             const fd = new FormData();
             fd.append('email', formCrear.email); fd.append('password', formCrear.password);
-            fd.append('telefono', formCrear.telefono); fd.append('region', formCrear.region);
+            fd.append('telefono', '+569' + formCrear.telefono); fd.append('region', formCrear.region);
             fd.append('comuna', formCrear.comuna);
             if (archivoCrear) fd.append('foto_perfil', archivoCrear);
             if (tipoCrear === 'ciudadano') {
@@ -327,8 +368,8 @@ const AdminUsuariosPage = () => {
                                             {[
                                                 ['Primer nombre',    u.ciudadano.primer_nombre],
                                                 ['Segundo nombre',   u.ciudadano.segundo_nombre   || '-'],
-                                                ['Apellido paterno', u.ciudadano.apellido_paterno],
-                                                ['Apellido materno', u.ciudadano.apellido_materno || '-'],
+                                                ['Primer apellido', u.ciudadano.apellido_paterno],
+                                                ['Segundo apellido', u.ciudadano.apellido_materno || '-'],
                                                 ['RUN',              u.ciudadano.run],
                                             ].map(([label, value]) => (
                                                 <div key={label}>
@@ -383,7 +424,24 @@ const AdminUsuariosPage = () => {
                                     <div className="space-y-3">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="col-span-2">
-                                                <Input label="Teléfono" value={formEditar.telefono} onChange={e => setFormEditar(prev => ({ ...prev, telefono: e.target.value }))} />
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-sm font-medium text-slate-700">Teléfono</label>
+                                                    <div className="flex rounded-xl overflow-hidden border border-slate-200 hover:border-slate-300 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-400 transition-all duration-200">
+                                                        <span className="flex items-center px-3 bg-slate-50 border-r border-slate-200 text-sm text-slate-500 font-medium select-none">+56 9</span>
+                                                        <input
+                                                            type="tel"
+                                                            inputMode="numeric"
+                                                            maxLength={8}
+                                                            value={formEditar.telefono || ''}
+                                                            placeholder="12345678"
+                                                            onChange={e => {
+                                                                const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                                                setFormEditar(prev => ({ ...prev, telefono: v }));
+                                                            }}
+                                                            className="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                             <Select label="Región" value={formEditar.region} onChange={e => setFormEditar(prev => ({ ...prev, region: e.target.value, comuna: '' }))}>
                                                 <option value="">Selecciona región</option>
@@ -402,8 +460,8 @@ const AdminUsuariosPage = () => {
                                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                                                 <Input label="Primer nombre"    value={formEditar.primer_nombre}    onChange={e => setFormEditar(prev => ({ ...prev, primer_nombre:    e.target.value }))} />
                                                 <Input label="Segundo nombre"   value={formEditar.segundo_nombre}   onChange={e => setFormEditar(prev => ({ ...prev, segundo_nombre:   e.target.value }))} />
-                                                <Input label="Apellido paterno" value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
-                                                <Input label="Apellido materno" value={formEditar.apellido_materno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_materno: e.target.value }))} />
+                                                <Input label="Primer apellido" value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
+                                                <Input label="Segundo apellido" value={formEditar.apellido_materno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_materno: e.target.value }))} />
                                             </div>
                                         )}
                                         {u.institucion && (
@@ -497,6 +555,8 @@ const AdminUsuariosPage = () => {
 
     /* ── LIST VIEW ─────────────────────────────────────────────────────── */
     const usuariosFiltrados = usuarios.filter(u => isSuperadmin || u.rol !== 'superadmin');
+    const totalPages  = Math.ceil(usuariosFiltrados.length / PAGE_SIZE);
+    const usuariosPag = usuariosFiltrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
@@ -514,6 +574,7 @@ const AdminUsuariosPage = () => {
                         {!loading && (
                             <p className="text-slate-500 text-sm mt-0.5 ml-7">
                                 {usuariosFiltrados.length} usuario{usuariosFiltrados.length !== 1 ? 's' : ''} encontrado{usuariosFiltrados.length !== 1 ? 's' : ''}
+                                {usuariosFiltrados.length > PAGE_SIZE && ` · página ${page} de ${totalPages}`}
                             </p>
                         )}
                     </div>
@@ -593,8 +654,9 @@ const AdminUsuariosPage = () => {
                             <p className="text-sm text-slate-400">No se encontraron usuarios con esos filtros.</p>
                         </motion.div>
                     ) : (
+                        <>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                            {usuariosFiltrados.map((user, i) => (
+                            {usuariosPag.map((user, i) => (
                                 <motion.button
                                     key={user.id}
                                     initial={{ opacity: 0, y: 10 }}
@@ -636,6 +698,8 @@ const AdminUsuariosPage = () => {
                                 </motion.button>
                             ))}
                         </div>
+                        <Paginacion page={page} totalPages={totalPages} onChange={setPage} />
+                        </>
                     )}
                 </div>
             </main>
@@ -697,10 +761,26 @@ const AdminUsuariosPage = () => {
                                         onChange={e => changeCrear('password', e.target.value)}
                                         onBlur={e => blurCrear('password', e.target.value)}
                                         error={errCrear('password')} />
-                                    <Input label="Teléfono *" value={formCrear.telefono}
-                                        onChange={e => changeCrear('telefono', e.target.value)}
-                                        onBlur={e => blurCrear('telefono', e.target.value)}
-                                        error={errCrear('telefono')} />
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-sm font-medium text-slate-700">Teléfono *</label>
+                                        <div className={`flex rounded-xl overflow-hidden border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-400 ${errCrear('telefono') ? 'border-rose-400' : 'border-slate-200 hover:border-slate-300'}`}>
+                                            <span className="flex items-center px-3 bg-slate-50 border-r border-slate-200 text-sm text-slate-500 font-medium select-none">+56 9</span>
+                                            <input
+                                                type="tel"
+                                                inputMode="numeric"
+                                                maxLength={8}
+                                                value={formCrear.telefono}
+                                                placeholder="12345678"
+                                                onChange={e => {
+                                                    const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                                                    changeCrear('telefono', v);
+                                                }}
+                                                onBlur={e => blurCrear('telefono', e.target.value)}
+                                                className="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                                            />
+                                        </div>
+                                        {errCrear('telefono') && <p className="text-rose-500 text-xs">{errCrear('telefono')}</p>}
+                                    </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <Select label="Región *" value={formCrear.region}
                                             onChange={e => { changeCrear('region', e.target.value); setFormCrear(prev => ({ ...prev, comuna: '' })); }}
@@ -736,11 +816,11 @@ const AdminUsuariosPage = () => {
                                                     error={errCrear('segundo_nombre')} />
                                             </div>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <Input label="Apellido paterno *" value={formCrear.apellido_paterno}
+                                                <Input label="Primer apellido *" value={formCrear.apellido_paterno}
                                                     onChange={e => changeCrear('apellido_paterno', e.target.value)}
                                                     onBlur={e => blurCrear('apellido_paterno', e.target.value)}
                                                     error={errCrear('apellido_paterno')} />
-                                                <Input label="Apellido materno" value={formCrear.apellido_materno}
+                                                <Input label="Segundo apellido" value={formCrear.apellido_materno}
                                                     onChange={e => changeCrear('apellido_materno', e.target.value)}
                                                     onBlur={e => blurCrear('apellido_materno', e.target.value)}
                                                     error={errCrear('apellido_materno')} />

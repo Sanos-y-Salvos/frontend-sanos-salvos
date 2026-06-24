@@ -123,7 +123,7 @@ const PerfilPage = () => {
   const errPass = (field: string) => (touchedPass[field] ? passErrors[field] : undefined);
 
   const iniciarEdicion = () => {
-    setTelefono(perfilData?.telefono || '');
+    setTelefono((perfilData?.telefono ?? '').replace(/^\+569/, ''));
     setRegion(perfilData?.region || '');
     setComuna(perfilData?.comuna || '');
     if (perfilData?.ciudadano) {
@@ -166,7 +166,7 @@ const PerfilPage = () => {
     setLoading(true); setSubmitError(''); setSuccess('');
     try {
       const fd = new FormData();
-      fd.append('telefono', telefono);
+      fd.append('telefono', '+569' + telefono);
       fd.append('region', region);
       fd.append('comuna', comuna);
       if (perfilData?.ciudadano) {
@@ -316,8 +316,8 @@ const PerfilPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <Field label="Primer nombre"   value={perfilData.ciudadano.primer_nombre} />
                       <Field label="Segundo nombre"  value={perfilData.ciudadano.segundo_nombre} />
-                      <Field label="Apellido paterno" value={perfilData.ciudadano.apellido_paterno} />
-                      <Field label="Apellido materno" value={perfilData.ciudadano.apellido_materno} />
+                      <Field label="Primer apellido" value={perfilData.ciudadano.apellido_paterno} />
+                      <Field label="Segundo apellido" value={perfilData.ciudadano.apellido_materno} />
                       <Field label="RUN"              value={perfilData.ciudadano.run} />
                       <Field label="Teléfono"         value={perfilData.telefono} />
                       <Field label="Región"           value={perfilData.region} />
@@ -359,11 +359,11 @@ const PerfilPage = () => {
                           error={err('segundo_nombre')} />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
-                        <Input label="Apellido paterno" value={apellidoPaterno}
+                        <Input label="Primer apellido" value={apellidoPaterno}
                           onChange={e => onChange('apellido_paterno', e.target.value, setApellidoPaterno)}
                           onBlur={e => touch('apellido_paterno', e.target.value)}
                           error={err('apellido_paterno')} />
-                        <Input label="Apellido materno" value={apellidoMaterno}
+                        <Input label="Segundo apellido" value={apellidoMaterno}
                           onChange={e => onChange('apellido_materno', e.target.value, setApellidoMaterno)}
                           onBlur={e => touch('apellido_materno', e.target.value)}
                           error={err('apellido_materno')} />
@@ -398,11 +398,28 @@ const PerfilPage = () => {
 
                   <div className="border-t border-slate-100 pt-3 space-y-3">
                     <SectionTitle icon={Phone}>Contacto</SectionTitle>
-                    <Input label="Teléfono" type="tel" value={telefono}
-                      icon={<Phone className="w-4 h-4" />}
-                      onChange={e => onChange('telefono', e.target.value, setTelefono)}
-                      onBlur={e => touch('telefono', e.target.value)}
-                      error={err('telefono')} />
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm font-medium text-slate-700">Teléfono</label>
+                      <div className={`flex rounded-xl overflow-hidden border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-400 ${err('telefono') ? 'border-rose-400' : 'border-slate-200 hover:border-slate-300'}`}>
+                        <span className="flex items-center gap-1.5 px-3 bg-slate-50 border-r border-slate-200 text-sm text-slate-500 font-medium select-none">
+                          <Phone className="w-3.5 h-3.5" />+56 9
+                        </span>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={8}
+                          value={telefono}
+                          placeholder="12345678"
+                          onChange={e => {
+                            const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                            onChange('telefono', v, setTelefono);
+                          }}
+                          onBlur={e => touch('telefono', e.target.value)}
+                          className="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                        />
+                      </div>
+                      {err('telefono') && <p className="text-rose-500 text-xs">{err('telefono')}</p>}
+                    </div>
                     <Select label="Región" value={region}
                       onChange={e => { setRegion(e.target.value); setComuna(''); touch('region', e.target.value); }}
                       onBlur={e => touch('region', e.target.value)}

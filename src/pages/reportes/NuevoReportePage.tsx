@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardList, MapPin, Camera, FileText, Loader2,
-  Navigation, CheckCircle, PawPrint,
+  Navigation, CheckCircle, PawPrint, Cpu,
 } from 'lucide-react';
 import { crearReporte } from '../../services/reporteService';
 import Navbar from '../../components/layout/Navbar';
@@ -64,6 +64,7 @@ const NuevoReportePage = () => {
   const [posicion, setPosicion]                 = useState<[number, number] | null>(null);
   const [centroMapa, setCentroMapa]             = useState<[number, number]>(CENTRO_DEFAULT);
   const [direccionReferencia, setDireccionReferencia] = useState('');
+  const [codigoChip, setCodigoChip]             = useState('');
   const [descripcion, setDescripcion]           = useState('');
   const [fotos, setFotos]                       = useState<File[]>([]);
 
@@ -102,7 +103,7 @@ const NuevoReportePage = () => {
     const [lat, lng] = posicion;
     setLoading(true);
     try {
-      const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos });
+      const reporte = await crearReporte({ nombreMascota, especie, color, tamanio, tipo, ubicacionLatitud: lat, ubicacionLongitud: lng, codigoChip: codigoChip.trim() || undefined, direccionReferencia: direccionReferencia || undefined, descripcion: descripcion || undefined, fotos });
       navigate(`/reportes/${reporte.id}`);
     } catch {
       setError('Error al crear el reporte. Intenta nuevamente.');
@@ -203,6 +204,19 @@ const NuevoReportePage = () => {
                 onChange={(e) => setColor(e.target.value)}
                 placeholder="Ej: Marrón con manchas blancas" required
               />
+              <div className="flex flex-col gap-1">
+                <Input
+                  label="Código de chip"
+                  icon={<Cpu className="w-4 h-4" />}
+                  type="text" value={codigoChip}
+                  onChange={(e) => setCodigoChip(e.target.value.replace(/\D/g, '').slice(0, 15))}
+                  placeholder="15 dígitos (opcional)"
+                  maxLength={15}
+                />
+                <p className="text-xs text-slate-400 pl-1">
+                  Si la mascota tiene microchip, ingrésalo. Una coincidencia de chip genera match automático.
+                </p>
+              </div>
             </div>
 
             {/* Ubicación */}

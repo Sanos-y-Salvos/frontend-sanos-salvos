@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { MessageCircle, ChevronRight, Loader2, AlertCircle, PawPrint } from 'lucide-react';
 import { listarSalas } from '../../services/mensajeriaService';
+import { obtenerReporte } from '../../services/reporteService';
 import { useMensajeria } from '../../context/MensajeriaContext';
+import { useAuth } from '../../hooks/useAuth';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import type { Sala } from '../../types';
@@ -13,20 +15,65 @@ const estadoBadge: Record<string, string> = {
   CLAUSURADA: 'bg-rose-100 text-rose-700',
 };
 
+const estadoLabel: Record<string, string> = {
+  ACTIVA:     'Activa',
+  CONGELADA:  'Congelada',
+  CLAUSURADA: 'Clausurada',
+};
+
 const SalasPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { clearNotificaciones } = useMensajeria();
-  const [salas, setSalas]       = useState<Sala[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError]       = useState('');
+
+  const [salas, setSalas]                       = useState<Sala[]>([]);
+  const [nombresMascotas, setNombresMascotas]   = useState<Record<string, string>>({});
+  const [cargando, setCargando]                 = useState(true);
+  const [error, setError]                       = useState('');
 
   useEffect(() => {
     clearNotificaciones();
     listarSalas()
-      .then(setSalas)
+      .then(async (data) => {
+        setSalas(data);
+        if (data.length === 0) return;
+
+        // Recopilar IDs únicos de reportes de todas las salas
+        const ids = [...new Set(data.flatMap(s => [s.reporteAId, s.reporteBId]))];
+
+        // Cargar todos los reportes en paralelo (ignorando fallos individuales)
+        const results = await Promise.allSettled(ids.map(id => obtenerReporte(id)));
+        const mapa: Record<string, string> = {};
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') mapa[ids[i]] = r.value.nombreMascota;
+        });
+        setNombresMascotas(mapa);
+      })
       .catch(() => setError('No se pudieron cargar las conversaciones.'))
       .finally(() => setCargando(false));
   }, []);
+
+  const tituloCon = (sala: Sala): string => {
+    const nombreA = nombresMascotas[sala.reporteAId];
+    const nombreB = nombresMascotas[sala.reporteBId];
+    if (nombreA && nombreB) return `${nombreA} & ${nombreB}`;
+    if (nombreA) return nombreA;
+    if (nombreB) return nombreB;
+    return 'Conversación privada';
+  };
+
+  // Nombre de la mascota propia del usuario autenticado
+  const miMascota = (sala: Sala): string | undefined => {
+    const esSoyA = sala.usuarioAId === user?.credential_id;
+    const miReporteId = esSoyA ? sala.reporteAId : sala.reporteBId;
+    return nombresMascotas[miReporteId];
+  };
+
+  const otraMascota = (sala: Sala): string | undefined => {
+    const esSoyA = sala.usuarioAId === user?.credential_id;
+    const otroReporteId = esSoyA ? sala.reporteBId : sala.reporteAId;
+    return nombresMascotas[otroReporteId];
+  };
 
   if (cargando) return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -54,7 +101,6 @@ const SalasPage = () => {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar />
 
-      {/* Page header */}
       <div className="bg-white border-b border-slate-100">
         <div className="max-w-2xl mx-auto px-5 py-6">
           <h1 className="text-xl font-display font-bold text-slate-900">Mis conversaciones</h1>
@@ -80,34 +126,53 @@ const SalasPage = () => {
             </div>
           ) : (
             <ul className="space-y-3">
-              {salas.map((sala) => (
-                <li key={sala.id}>
-                  <button
-                    onClick={() => navigate(`/mensajes/${sala.id}`)}
-                    className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
-                        <MessageCircle className="w-5 h-5 text-slate-400" strokeWidth={1.5} />
+              {salas.map((sala) => {
+                const miNombre    = miMascota(sala);
+                const otroNombre  = otraMascota(sala);
+                return (
+                  <li key={sala.id}>
+                    <button
+                      onClick={() => navigate(`/mensajes/${sala.id}`)}
+                      className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
+                          <PawPrint className="w-5 h-5 text-brand-400" strokeWidth={1.5} />
+                        </div>
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800 truncate">
+                            {tituloCon(sala)}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 flex-wrap">
+                            {miNombre && (
+                              <span className="bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded-md font-medium">
+                                {miNombre}
+                              </span>
+                            )}
+                            {miNombre && otroNombre && <span>·</span>}
+                            {otroNombre && (
+                              <span className="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-md font-medium">
+                                {otroNombre}
+                              </span>
+                            )}
+                            <span>
+                              {new Date(sala.creadoEn).toLocaleDateString('es-CL', {
+                                day: 'numeric', month: 'long', year: 'numeric',
+                              })}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold text-slate-800">Conversación privada</p>
-                        <p className="text-xs text-slate-400">
-                          {new Date(sala.creadoEn).toLocaleDateString('es-CL', {
-                            day: 'numeric', month: 'long', year: 'numeric',
-                          })}
-                        </p>
+                      <div className="flex items-center gap-3 shrink-0 ml-2">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${estadoBadge[sala.estado] ?? 'bg-slate-100 text-slate-500'}`}>
+                          {estadoLabel[sala.estado] ?? sala.estado}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${estadoBadge[sala.estado] ?? 'bg-slate-100 text-slate-500'}`}>
-                        {sala.estado}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
-                    </div>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

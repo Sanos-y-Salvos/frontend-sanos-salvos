@@ -2,12 +2,49 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MessageCircle, ShieldAlert, RotateCcw, Loader2, AlertCircle,
-  Clock, User, ExternalLink,
+  Clock, User, ExternalLink, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { listarSalasReportadas, cambiarEstadoSala, type SalaReportada } from '../../services/mensajeriaService';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import Alert from '../../components/ui/Alert';
+
+const PAGE_SIZE = 5;
+
+const Paginacion = ({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) => {
+  if (totalPages <= 1) return null;
+  const pages: (number | '…')[] = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > 3) pages.push('…');
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+    if (page < totalPages - 2) pages.push('…');
+    pages.push(totalPages);
+  }
+  const btn = 'w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors';
+  return (
+    <div className="flex items-center justify-center gap-1.5 mt-8">
+      <button onClick={() => onChange(page - 1)} disabled={page === 1}
+        className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      {pages.map((p, i) =>
+        p === '…'
+          ? <span key={`e-${i}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
+          : <button key={p} onClick={() => onChange(p as number)}
+              className={`${btn} ${page === p ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+              {p}
+            </button>
+      )}
+      <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
+        className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString('es-CL', {
@@ -21,6 +58,7 @@ export default function AdminMensajesPage() {
   const [cargando, setCargando]     = useState(true);
   const [error, setError]           = useState('');
   const [accion, setAccion]         = useState<Record<string, boolean>>({});
+  const [page, setPage]             = useState(1);
 
   useEffect(() => {
     listarSalasReportadas()
@@ -33,7 +71,12 @@ export default function AdminMensajesPage() {
     setAccion((prev) => ({ ...prev, [salaId]: true }));
     try {
       await cambiarEstadoSala(salaId, estado);
-      setReportadas((prev) => prev.filter((r) => r.sala.id !== salaId));
+      setReportadas((prev) => {
+        const updated = prev.filter((r) => r.sala.id !== salaId);
+        const newTotalPages = Math.ceil(updated.length / PAGE_SIZE);
+        if (page > newTotalPages) setPage(Math.max(1, newTotalPages));
+        return updated;
+      });
     } catch {
       setError('No se pudo cambiar el estado de la conversación.');
     } finally {
@@ -55,7 +98,7 @@ export default function AdminMensajesPage() {
             <div>
               <h1 className="text-xl font-display font-bold text-slate-900">Conversaciones reportadas</h1>
               <p className="text-slate-500 text-sm mt-0.5">
-                {cargando ? 'Cargando…' : `${reportadas.length} conversación${reportadas.length !== 1 ? 'es' : ''} pendiente${reportadas.length !== 1 ? 's' : ''} de revisión`}
+                {cargando ? 'Cargando…' : `${reportadas.length} conversación${reportadas.length !== 1 ? 'es' : ''} pendiente${reportadas.length !== 1 ? 's' : ''} de revisión${reportadas.length > PAGE_SIZE ? ` · página ${page} de ${Math.ceil(reportadas.length / PAGE_SIZE)}` : ''}`}
               </p>
             </div>
           </div>
@@ -77,9 +120,13 @@ export default function AdminMensajesPage() {
             </div>
             <p className="text-sm">No hay conversaciones reportadas pendientes.</p>
           </div>
-        ) : (
+        ) : (() => {
+          const totalPages   = Math.ceil(reportadas.length / PAGE_SIZE);
+          const paginadas    = reportadas.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+          return (
+          <>
           <div className="flex flex-col gap-4">
-            {reportadas.map(({ sala, denuncias }) => (
+            {paginadas.map(({ sala, denuncias }) => (
               <div key={sala.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
 
                 {/* Header sala */}
@@ -163,7 +210,10 @@ export default function AdminMensajesPage() {
               </div>
             ))}
           </div>
-        )}
+          <Paginacion page={page} totalPages={totalPages} onChange={setPage} />
+          </>
+          );
+        })()}
       </main>
 
       <Footer />

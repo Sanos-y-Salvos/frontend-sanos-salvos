@@ -8,7 +8,7 @@ import {
 import { userService } from '../../services/userService';
 import { regionService } from '../../services/regionService';
 import { formatRut, parseRut } from '../../utils/rutFormatter';
-import { validateField } from '../../utils/validators';
+import { validateField, getPasswordReqs } from '../../utils/validators';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import Alert from '../../components/ui/Alert';
@@ -163,7 +163,7 @@ const RegisterPage = () => {
       const formData = new FormData();
       formData.append('email', email);
       formData.append('password', password);
-      formData.append('telefono', telefono);
+      formData.append('telefono', '+569' + telefono);
       formData.append('region', region);
       formData.append('comuna', comuna);
       formData.append('direccion', direccion);
@@ -351,14 +351,14 @@ const RegisterPage = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input
-                      label={<>Ap. paterno <Req /></>}
+                      label={<>Primer apellido <Req /></>}
                       type="text" value={apellidoPaterno}
                       onChange={(e) => onChange('apellido_paterno', e.target.value, setApellidoPaterno)}
                       onBlur={(e) => touch('apellido_paterno', e.target.value)}
                       error={err('apellido_paterno')}
                     />
                     <Input
-                      label="Ap. materno"
+                      label="Segundo apellido"
                       type="text" value={apellidoMaterno}
                       onChange={(e) => onChange('apellido_materno', e.target.value, setApellidoMaterno)}
                       onBlur={(e) => touch('apellido_materno', e.target.value)}
@@ -430,15 +430,28 @@ const RegisterPage = () => {
                 placeholder="tu@email.cl"
                 error={err('email')}
               />
-              <Input
-                label={<>Teléfono <Req /></>}
-                icon={<Phone className="w-4 h-4" />}
-                type="tel" value={telefono}
-                onChange={(e) => onChange('telefono', e.target.value, setTelefono)}
-                onBlur={(e) => touch('telefono', e.target.value)}
-                placeholder="912345678"
-                error={err('telefono')}
-              />
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-slate-700">Teléfono <Req /></label>
+                <div className={`flex rounded-xl overflow-hidden border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-400 ${err('telefono') ? 'border-rose-400' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <span className="flex items-center gap-1.5 px-3 bg-slate-50 border-r border-slate-200 text-sm text-slate-500 font-medium select-none">
+                    <Phone className="w-3.5 h-3.5" />+56 9
+                  </span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={8}
+                    value={telefono}
+                    placeholder="12345678"
+                    onChange={e => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      onChange('telefono', v, setTelefono);
+                    }}
+                    onBlur={e => touch('telefono', e.target.value)}
+                    className="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  />
+                </div>
+                {err('telefono') && <p className="text-rose-500 text-xs">{err('telefono')}</p>}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <Select
                   label={<>Región <Req /></>}
@@ -492,7 +505,8 @@ const RegisterPage = () => {
                       <input
                         type={show ? 'text' : 'password'}
                         value={val}
-                        placeholder={isConfirm ? '••••••••' : 'Mínimo 6 caracteres'}
+                        maxLength={13}
+                        placeholder="••••••••"
                         onChange={(e) => isConfirm
                           ? onChange('confirmPassword', e.target.value, setConfirmPassword, { password })
                           : onPasswordChange(e.target.value)}
@@ -510,6 +524,19 @@ const RegisterPage = () => {
                       </button>
                     </div>
                     {err(field) && <p className="text-rose-500 text-xs">{err(field)}</p>}
+                    {!isConfirm && password && (
+                      <ul className="mt-1.5 space-y-1 pl-1">
+                        {getPasswordReqs(password).map(req => (
+                          <li key={req.label} className={`flex items-center gap-1.5 text-xs transition-colors ${req.met ? 'text-emerald-600' : 'text-slate-400'}`}>
+                            {req.met
+                              ? <CheckCircle className="w-3 h-3 flex-shrink-0" />
+                              : <span className="w-3 h-3 rounded-full border border-slate-300 flex-shrink-0 inline-block" />
+                            }
+                            {req.label}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 );
               })}

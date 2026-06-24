@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ClipboardList, ChevronRight, MessageSquare, Filter, Loader2,
+  ClipboardList, ChevronRight, ChevronLeft, MessageSquare, Filter, Loader2,
   Wrench, AlertTriangle, HelpCircle, ShieldCheck, User, Send,
   UserCheck, RefreshCw, TicketCheck, Mail,
 } from 'lucide-react';
@@ -35,6 +35,43 @@ const CatIcon = ({ cat }: { cat: string }) => {
 };
 
 const selectCls = 'border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all';
+
+const PAGE_SIZE = 10;
+
+const Paginacion = ({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) => {
+  if (totalPages <= 1) return null;
+  const pages: (number | '…')[] = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (page > 3) pages.push('…');
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i);
+    if (page < totalPages - 2) pages.push('…');
+    pages.push(totalPages);
+  }
+  const btn = 'w-9 h-9 flex items-center justify-center rounded-xl text-sm font-medium transition-colors';
+  return (
+    <div className="flex items-center justify-center gap-1.5 mt-8">
+      <button onClick={() => onChange(page - 1)} disabled={page === 1}
+        className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      {pages.map((p, i) =>
+        p === '…'
+          ? <span key={`e-${i}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
+          : <button key={p} onClick={() => onChange(p as number)}
+              className={`${btn} ${page === p ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+              {p}
+            </button>
+      )}
+      <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
+        className={`${btn} border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed`}>
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
 
 /* ── Vista detalle ────────────────────────────────────────────────────── */
 const DetalleTicket = ({
@@ -284,6 +321,7 @@ const AdminTicketsPage = () => {
   const [error, setError]                 = useState('');
   const [filtroEstado, setFiltroEstado]   = useState('');
   const [seleccionado, setSeleccionado]   = useState<Ticket | null>(null);
+  const [page, setPage]                   = useState(1);
 
   const cargarTickets = async () => {
     setLoading(true);
@@ -297,7 +335,7 @@ const AdminTicketsPage = () => {
     }
   };
 
-  useEffect(() => { cargarTickets(); }, [filtroEstado]);
+  useEffect(() => { setPage(1); cargarTickets(); }, [filtroEstado]);
 
   const handleVerTicket = async (id: string) => {
     try {
@@ -330,6 +368,7 @@ const AdminTicketsPage = () => {
           {!loading && (
             <p className="text-slate-500 text-sm mt-0.5 ml-7">
               {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} encontrado{tickets.length !== 1 ? 's' : ''}
+              {tickets.length > PAGE_SIZE && ` · página ${page} de ${Math.ceil(tickets.length / PAGE_SIZE)}`}
             </p>
           )}
         </div>
@@ -385,9 +424,13 @@ const AdminTicketsPage = () => {
               <h2 className="font-display font-bold text-slate-800 mb-1">No hay tickets</h2>
               <p className="text-sm text-slate-400">No se encontraron tickets con ese filtro.</p>
             </motion.div>
-          ) : (
+          ) : (() => {
+            const totalPages = Math.ceil(tickets.length / PAGE_SIZE);
+            const paginados  = tickets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            return (
+            <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {tickets.map((ticket, i) => (
+              {paginados.map((ticket, i) => (
                 <motion.button
                   key={ticket.id}
                   initial={{ opacity: 0, y: 10 }}
@@ -429,7 +472,10 @@ const AdminTicketsPage = () => {
                 </motion.button>
               ))}
             </div>
-          )}
+            <Paginacion page={page} totalPages={totalPages} onChange={setPage} />
+            </>
+            );
+          })()}
         </div>
       </main>
 

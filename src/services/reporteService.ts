@@ -6,6 +6,7 @@ export interface FiltrosReporte {
   estado?: string
   especie?: string
   color?: string
+  usuarioId?: string
   page?: number
   limit?: number
 }
@@ -37,6 +38,7 @@ export interface NuevoReporte {
   tipo: string
   ubicacionLatitud: number
   ubicacionLongitud: number
+  codigoChip?: string
   direccionReferencia?: string
   descripcion?: string
   fotos?: File[]
@@ -72,6 +74,7 @@ export const crearReporte = async (reporte: NuevoReporte): Promise<Reporte> => {
   formData.append('tipo', reporte.tipo)
   formData.append('ubicacionLatitud', String(reporte.ubicacionLatitud))
   formData.append('ubicacionLongitud', String(reporte.ubicacionLongitud))
+  if (reporte.codigoChip) formData.append('codigoChip', reporte.codigoChip)
   if (reporte.direccionReferencia) formData.append('direccionReferencia', reporte.direccionReferencia)
   if (reporte.descripcion) formData.append('descripcion', reporte.descripcion)
   reporte.fotos?.forEach((foto) => formData.append('fotos', foto))
