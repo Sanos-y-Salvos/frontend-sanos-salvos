@@ -316,11 +316,7 @@ const PerfilPage = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <Field label="Primer nombre"   value={perfilData.ciudadano.primer_nombre} />
                       <Field label="Segundo nombre"  value={perfilData.ciudadano.segundo_nombre} />
-<<<<<<< HEAD
                       <Field label="Primer apellido" value={perfilData.ciudadano.apellido_paterno} />
-=======
-                      <Field label="Primer apellido"  value={perfilData.ciudadano.apellido_paterno} />
->>>>>>> 9d28460bb935c8082256404b7e4c703e17758d4f
                       <Field label="Segundo apellido" value={perfilData.ciudadano.apellido_materno} />
                       <Field label="RUN"              value={perfilData.ciudadano.run} />
                       <Field label="Teléfono"         value={perfilData.telefono} />

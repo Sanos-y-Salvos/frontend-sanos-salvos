@@ -368,11 +368,7 @@ const AdminUsuariosPage = () => {
                                             {[
                                                 ['Primer nombre',    u.ciudadano.primer_nombre],
                                                 ['Segundo nombre',   u.ciudadano.segundo_nombre   || '-'],
-<<<<<<< HEAD
                                                 ['Primer apellido', u.ciudadano.apellido_paterno],
-=======
-                                                ['Primer apellido',  u.ciudadano.apellido_paterno],
->>>>>>> 9d28460bb935c8082256404b7e4c703e17758d4f
                                                 ['Segundo apellido', u.ciudadano.apellido_materno || '-'],
                                                 ['RUN',              u.ciudadano.run],
                                             ].map(([label, value]) => (
@@ -464,11 +460,7 @@ const AdminUsuariosPage = () => {
                                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
                                                 <Input label="Primer nombre"    value={formEditar.primer_nombre}    onChange={e => setFormEditar(prev => ({ ...prev, primer_nombre:    e.target.value }))} />
                                                 <Input label="Segundo nombre"   value={formEditar.segundo_nombre}   onChange={e => setFormEditar(prev => ({ ...prev, segundo_nombre:   e.target.value }))} />
-<<<<<<< HEAD
                                                 <Input label="Primer apellido" value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
-=======
-                                                <Input label="Primer apellido"  value={formEditar.apellido_paterno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_paterno: e.target.value }))} />
->>>>>>> 9d28460bb935c8082256404b7e4c703e17758d4f
                                                 <Input label="Segundo apellido" value={formEditar.apellido_materno} onChange={e => setFormEditar(prev => ({ ...prev, apellido_materno: e.target.value }))} />
                                             </div>
                                         )}
