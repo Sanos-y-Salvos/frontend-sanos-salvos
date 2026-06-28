@@ -53,7 +53,7 @@ const NuevoTicketPage = () => {
 
   /* ── Éxito ── */
   if (creado) return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <motion.div
@@ -92,7 +92,7 @@ const NuevoTicketPage = () => {
 
   /* ── Formulario ── */
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">

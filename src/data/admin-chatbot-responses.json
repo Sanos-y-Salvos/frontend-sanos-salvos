@@ -1,0 +1,107 @@
+[
+  {
+    "id": "saludo",
+    "keywords": ["hola", "buenas", "hey", "saludos", "inicio", "ayuda", "comenzar", "que puedes", "que sabes"],
+    "response": "Hola, soy el asistente interno de Sanos y Salvos 🐾\n\nPuedo ayudarte con:\n• Gestión de tickets de soporte\n• Moderación de salas de mensajería\n• Gestión de usuarios y roles\n• Sistema de reportes y matching\n• Análisis y estadísticas\n• Términos, privacidad y normas de la comunidad\n\n¿En qué te puedo ayudar hoy?"
+  },
+  {
+    "id": "tickets_gestionar",
+    "keywords": ["ticket", "tickets", "tomar", "asignar", "gestionar ticket", "soporte ticket"],
+    "response": "Gestión de tickets de soporte:\n\n1. Ve a «Gestión de Tickets» en el sidebar.\n2. Usa los filtros de estado (Abierto, En proceso, Resuelto, Cerrado) para ordenar la vista.\n3. Para tomar un ticket: ábrelo y haz clic en «Tomar ticket». Esto lo asigna a tu usuario y cambia el estado a «En proceso».\n4. Responde al usuario desde la sección «Conversación».\n5. Una vez resuelto, cambia el estado a «Resuelto» o «Cerrado» según corresponda.\n\nLos tickets de usuarios no registrados envían tu respuesta por correo electrónico automáticamente."
+  },
+  {
+    "id": "tickets_estados",
+    "keywords": ["estado ticket", "abierto", "en proceso", "resuelto", "cerrado", "cambiar estado", "estados del ticket", "flujo ticket"],
+    "response": "Estados de un ticket de soporte:\n\n• Abierto — recién creado, nadie lo ha atendido aún.\n• En proceso — un administrador lo tomó y está siendo atendido.\n• Resuelto — el problema fue solucionado. El usuario puede seguir comentando.\n• Cerrado — el ticket se archiva. No acepta más comentarios.\n\nPuedes cambiar el estado desde la vista de detalle del ticket usando el selector de estado y el botón «Actualizar»."
+  },
+  {
+    "id": "tickets_responder",
+    "keywords": ["responder", "contestar", "respuesta ticket", "como respondo", "reply", "comentar"],
+    "response": "Para responder a un ticket:\n\n1. Abre el ticket desde «Gestión de Tickets».\n2. En la sección «Conversación», escribe tu respuesta en el campo de texto.\n3. Haz clic en «Responder».\n\nSi el ticket fue creado por un usuario no registrado (con email de contacto), tu respuesta se envía automáticamente a su correo además de guardarse en el sistema.\n\nLos usuarios registrados ven la respuesta en tiempo real gracias al chat en vivo."
+  },
+  {
+    "id": "salas_moderar",
+    "keywords": ["sala", "salas", "mensajes", "conversacion", "conversaciones", "moderar mensajes", "chat"],
+    "response": "Moderación de salas de mensajería:\n\nVe a «Mensajes» en el sidebar. Encontrarás dos pestañas:\n\n• Reportadas — salas denunciadas por usuarios. Puedes ver el motivo del reporte, la identidad del denunciante y el historial completo de la conversación.\n• Clausuradas — salas que ya fueron cerradas definitivamente.\n\nDesde la vista de detalle de una sala puedes:\n→ Restaurar: si el reporte no tiene fundamento.\n→ Clausurar: si hay una violación grave a las normas."
+  },
+  {
+    "id": "salas_reportadas",
+    "keywords": ["reportada", "denuncia", "sala reportada", "flag", "motivo reporte", "quien reporto"],
+    "response": "Cuando una sala es reportada:\n\n1. Aparece en la pestaña «Reportadas» de Gestión de Mensajes.\n2. Puedes ver el nombre del usuario que la reportó y el motivo que indicó.\n3. Revisa el historial completo de la conversación.\n4. Evalúa si el motivo es fundado según las Normas de la Comunidad.\n5. Decide: Restaurar (sin fundamento) o Clausurar (violación confirmada).\n\nAl restaurar, el sistema envía un mensaje automático a los participantes informando que no se encontraron motivos para clausurar la sala."
+  },
+  {
+    "id": "salas_clausurar",
+    "keywords": ["clausurar", "clausura", "cerrar sala", "cuando clausuro", "criterio clausura", "clausurar conversacion"],
+    "response": "Cuándo clausurar una sala:\n\nClausurar es una medida definitiva e irreversible. Aplica cuando la conversación contiene:\n\n• Amenazas, acoso o intimidación hacia otro usuario.\n• Solicitud o intercambio de dinero fuera del propósito de la plataforma.\n• Contenido sexual, violento o explícito.\n• Evidencia de intento de fraude (reclamar una mascota ajena, extorsión).\n• Suplantación de identidad.\n\nAl clausurar, el sistema envía automáticamente un mensaje a los participantes informando el motivo y cómo apelar."
+  },
+  {
+    "id": "salas_restaurar",
+    "keywords": ["restaurar", "reactivar", "descongelar", "dejar pasar", "sin fundamento", "reabrir"],
+    "response": "Cuándo restaurar una sala:\n\nRestaurar (liberar del estado Congelada) aplica cuando:\n\n• El motivo del reporte no corresponde a ninguna violación de las Normas de la Comunidad.\n• El reporte parece malicioso o usado como herramienta de acoso hacia el otro usuario.\n• La conversación es normal y el reporte fue un malentendido.\n\nAl restaurar, el sistema envía automáticamente este mensaje a la sala: «El equipo de Soporte revisó el reporte y no encontró motivos para clausurar esta conversación. La sala ha sido restaurada.»"
+  },
+  {
+    "id": "roles_sistema",
+    "keywords": ["rol", "roles", "moderador", "administrador", "superadmin", "ciudadano", "veterinaria", "municipalidad", "permisos", "diferencia roles"],
+    "response": "Roles del sistema Sanos y Salvos:\n\nRoles públicos:\n• Ciudadano — persona natural. Puede reportar mascotas y usar mensajería.\n• Veterinaria — institución veterinaria. Mismos permisos que ciudadano, identificación institucional.\n• Municipalidad — organismo público. Mismos permisos, identificación institucional.\n\nRoles de empleados (acceso al panel interno):\n• Moderador — puede moderar salas y revisar reportes. Sin acceso a datos sensibles de usuarios.\n• Administrador — acceso completo: tickets, usuarios, salas, análisis.\n• Superadmin — mismo acceso que administrador. Perfil de máximo nivel."
+  },
+  {
+    "id": "usuarios_gestionar",
+    "keywords": ["usuario", "usuarios", "gestionar usuario", "ver usuario", "cuenta usuario", "activar", "desactivar", "bloquear"],
+    "response": "Gestión de usuarios:\n\nVe a «Usuarios» en el sidebar. Desde ahí puedes:\n\n• Ver el listado completo de usuarios con filtros por rol, tipo y estado.\n• Buscar usuarios por nombre, email o RUN.\n• Ver el detalle de un usuario: datos personales, tipo de cuenta y actividad.\n• Activar o desactivar cuentas según corresponda.\n\nCuando un usuario infringe los Términos de Uso, puedes desactivar su cuenta desde esta sección. Si la situación es grave, documéntala antes de actuar."
+  },
+  {
+    "id": "reportes_estados",
+    "keywords": ["estado reporte", "en busqueda", "reporte resuelto", "abandonado", "oculto", "mascota encontrada reporte", "estados mascota"],
+    "response": "Estados de los reportes de mascotas:\n\n• En búsqueda — reporte activo. La mascota aún no fue encontrada.\n• Resuelto — la mascota fue reencuentrada. El reporte se cierra exitosamente.\n• Abandonado — el usuario no actualizó el reporte en un tiempo prolongado o lo desactivó.\n• Oculto — el reporte fue ocultado por el equipo de moderación (contenido inapropiado, reporte falso, etc.).\n\nTipos de reporte: Perdida (dueño busca su mascota) y Encontrada (alguien encontró una mascota)."
+  },
+  {
+    "id": "matching_sistema",
+    "keywords": ["matching", "match", "coincidencia", "emparejamiento", "score", "puntaje", "como funciona el match", "umbral", "chip"],
+    "response": "Sistema de matching (emparejamiento automático):\n\nCuando se publica un reporte, el sistema lo compara con todos los reportes del tipo opuesto y misma especie:\n\n• Chip coincidente → score 1.0 (100%). El match se acepta automáticamente.\n• Chips distintos → score 0.0. Coincidencia imposible.\n• Sin chip: se calcula por color (40%), tamaño (20%) y distancia (40% usando Haversine, máx. 50 km).\n\nSi el puntaje ≥ 60%, se crea un match en estado Pendiente y ambos usuarios son notificados. Los usuarios pueden Aceptar o Rechazar el match. Al aceptar, se crea una sala de mensajería."
+  },
+  {
+    "id": "analisis_estadisticas",
+    "keywords": ["analisis", "estadistica", "grafico", "reporte estadistico", "dashboard", "metricas", "datos", "cuantos"],
+    "response": "Análisis y estadísticas:\n\nVe a «Análisis» en el sidebar (menú desplegable). Tienes tres vistas:\n\n• Usuarios — registros por período, distribución por rol y tipo de cuenta.\n• Mascotas — reportes por estado, especie y evolución temporal.\n• Tickets — tickets por estado, categoría y tiempo promedio de resolución.\n\nTodos los gráficos son interactivos. Puedes usarlos para identificar picos de actividad, categorías de tickets frecuentes o períodos de alta pérdida de mascotas."
+  },
+  {
+    "id": "terminos_condiciones",
+    "keywords": ["terminos", "condiciones", "ley", "legal", "suspension cuenta", "cuando suspender", "eliminar cuenta", "infracciones", "sanciones"],
+    "response": "Términos y Condiciones — puntos clave para el equipo interno:\n\nMotivos válidos para suspender o eliminar una cuenta:\n• Información falsa al registrarse (RUN/RUT inválido o de otra persona).\n• Publicación de reportes falsos o fraudulentos.\n• Acoso, amenazas o conducta abusiva en mensajería.\n• Suplantación de identidad.\n• Actividades que comprometan la seguridad de la plataforma.\n\nLey aplicable: legislación chilena, jurisdicción: Santiago.\nContacto legal: legal@sanosysalvos.cl\n\nLa plataforma es gratuita. No garantizamos el reencuentro efectivo de mascotas."
+  },
+  {
+    "id": "privacidad_datos",
+    "keywords": ["privacidad", "datos personales", "ley 19628", "arco", "borrar datos", "eliminar datos", "solicitud datos", "derecho acceso", "rectificacion"],
+    "response": "Política de Privacidad — cómo atender solicitudes de usuarios:\n\nBajo la Ley N°19.628, los usuarios tienen derecho a:\n• Acceso — solicitarnos qué datos tenemos de ellos.\n• Rectificación — corregir datos erróneos.\n• Cancelación — pedir que eliminemos sus datos.\n• Oposición — oponerse al tratamiento en casos justificados.\n\nSi un usuario envía una solicitud de este tipo:\n1. Recíbela por ticket o correo a legal@sanosysalvos.cl.\n2. Identifica al usuario (RUN + correo).\n3. Responde en un plazo máximo de 15 días hábiles.\n4. Si solicita eliminación, ejecutar la baja de cuenta y datos en máximo 30 días.\n\nNo vendemos ni cedemos datos a terceros con fines comerciales."
+  },
+  {
+    "id": "normas_comunidad",
+    "keywords": ["normas", "comunidad", "comportamiento", "infracciones normas", "que esta prohibido", "reglas"],
+    "response": "Normas de la Comunidad — resumen operativo:\n\nEstá prohibido en la plataforma:\n• Publicar reportes falsos o duplicados.\n• Solicitar dinero o recompensas abusivas por devolución de mascotas.\n• Acosar, amenazar o intimidar a otros usuarios.\n• Publicar contenido sexual, violento o inapropiado en la mensajería.\n• Suplantar la identidad de otras personas o instituciones.\n• Usar la plataforma para captura de datos de otros usuarios.\n\nEscala de sanciones: Advertencia → Congelamiento de sala → Clausura → Suspensión de cuenta → Eliminación permanente.\n\nLas apelaciones a sanciones se envían a legal@sanosysalvos.cl."
+  },
+  {
+    "id": "bienestar_animal",
+    "keywords": ["maltrato", "bienestar animal", "crueldad", "abandono", "maltrato mascota", "abuso animal"],
+    "response": "Bienestar Animal — protocolo ante indicios de maltrato:\n\nSi detectas en la plataforma indicios de maltrato, abandono intencional o tráfico de animales:\n\n1. Documenta la evidencia (captura de pantalla, ID del reporte/usuario).\n2. Suspende la cuenta inmediatamente desde «Gestión de Usuarios».\n3. Clausura cualquier sala de mensajería asociada.\n4. Reporta la situación a las autoridades competentes:\n   • SEREMI de Salud (Ley 21.020, Tenencia Responsable de Mascotas)\n   • Carabineros de Chile (133) ante situaciones de urgencia.\n5. Deja registro del caso en el sistema de tickets internos.\n\nLa Ley 21.020 tipifica el maltrato animal como delito en Chile."
+  },
+  {
+    "id": "fraude_spam",
+    "keywords": ["fraude", "estafa", "engano", "spam", "falso", "fake", "como procedo fraude", "denuncia fraude"],
+    "response": "Cómo proceder ante fraude o spam:\n\nSi detectas conducta fraudulenta (reporte falso, pedido de dinero, suplantación):\n\n1. Suspende la cuenta del usuario involucrado.\n2. Clausura la sala de mensajería si la hay.\n3. Oculta los reportes publicados por el usuario fraudulento.\n4. Crea un ticket interno documentando el caso (evidencia, ID de usuario, descripción).\n5. Si el fraude involucra un delito (extorsión, amenazas), deriva a Carabineros (133) o Fiscalía.\n\nAntes de suspender una cuenta, asegúrate de tener evidencia suficiente. En caso de duda, congela la sala y escala el caso a un administrador o superadmin."
+  },
+  {
+    "id": "chatbot_publico",
+    "keywords": ["chatbot publico", "bot usuario", "asistente usuario", "chatbot soporte", "como funciona el bot"],
+    "response": "Chatbot público de Sanos y Salvos:\n\nEl chatbot visible para usuarios (ícono de burbuja en la esquina inferior) responde preguntas frecuentes usando un sistema de palabras clave. No utiliza inteligencia artificial.\n\nIntenciones que maneja:\n• Cómo reportar una mascota perdida o encontrada.\n• Cómo funciona el sistema de matching.\n• Cómo registrarse e iniciar sesión.\n• Cómo recuperar la contraseña.\n• Cómo usar el mapa interactivo.\n• Cómo crear un ticket de soporte.\n\nNo responde preguntas sobre casos específicos de usuarios. Para eso existe el sistema de tickets."
+  },
+  {
+    "id": "salas_estados",
+    "keywords": ["estado sala", "activa", "congelada", "clausurada", "estados conversacion"],
+    "response": "Estados de las salas de mensajería:\n\n• Activa — conversación en curso. Ambos usuarios pueden enviar mensajes.\n• Congelada — sala pausada por reporte de un usuario. Solo el equipo de moderación puede leerla. Está en revisión.\n• Clausurada — sala cerrada permanentemente por incumplimiento de normas. Los participantes pueden leer el historial pero no enviar mensajes nuevos.\n\nLas transiciones posibles son: Activa → Congelada (por denuncia) → Activa (si se restaura) o → Clausurada (si se confirma la infracción)."
+  },
+  {
+    "id": "fallback",
+    "keywords": [],
+    "response": "No encontré información específica sobre eso en mi base de conocimiento. Puedes preguntarme sobre:\n\n• Gestión de tickets\n• Moderación de salas\n• Gestión de usuarios y roles\n• Sistema de matching y reportes\n• Análisis y estadísticas\n• Términos, privacidad y normas\n• Protocolos ante fraude o maltrato animal\n\n¿Quieres que te explique alguno de estos temas?"
+  }
+]

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { PawPrint, TrendingUp, Search, CheckCircle, Loader2, X, SlidersHorizontal } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  ComposedChart, Line, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { getEstadisticasReportes, type EstadisticasReportes } from '../../../services/reporteService';
@@ -63,6 +64,22 @@ const ChartCard = ({ title, children, className = '' }: {
   </motion.div>
 );
 
+const InsightCard = ({ label, value, sub, bar }: {
+  label: string; value: string | number; sub?: string; bar?: number;
+}) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+    <p className="text-2xl font-display font-bold text-slate-900 mt-1">{value}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    {bar !== undefined && (
+      <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(bar, 100)}%`, backgroundColor: bar >= 80 ? '#10b981' : bar >= 50 ? '#f59e0b' : '#ef4444' }} />
+      </div>
+    )}
+  </div>
+);
+
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
     <div className="bg-white border border-slate-200 rounded-xl shadow-lg px-3 py-2 text-xs">
@@ -93,11 +110,6 @@ const AnalisisMascotasPage = () => {
       .catch(() => setError('Error al cargar los datos'))
       .finally(() => setLoading(false));
   }, []);
-
-  const allMonths = useMemo(
-    () => [...new Set((stats?.por_mes ?? []).map(d => d.mes))].sort(),
-    [stats],
-  );
 
   const filtrosActivos = !!(mesDesde || mesHasta || filtroTipo || filtroEspecie);
   const resetFiltros = () => { setMesDesde(''); setMesHasta(''); setFiltroTipo(''); setFiltroEspecie(''); };
@@ -169,6 +181,27 @@ const AnalisisMascotasPage = () => {
   }, [stats, mesDesde, mesHasta, filtroEspecie, filtrosActivos]);
 
   const totalPeriodo = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
+
+  /* crecimiento mes a mes */
+  const crecimientoData = useMemo(() =>
+    mesData.map((d, i) => ({
+      mes: d.mes,
+      count: d.count,
+      pct: i === 0 || mesData[i - 1].count === 0
+        ? null
+        : +((d.count - mesData[i - 1].count) / mesData[i - 1].count * 100).toFixed(1),
+    })),
+  [mesData]);
+
+  /* ratio perdida/encontrada por mes */
+  const ratioMesData = useMemo(() =>
+    tipoMesData.map(d => {
+      const p = (d as any).PERDIDA ?? 0;
+      const e = (d as any).ENCONTRADA ?? 0;
+      return { mes: d.mes, ratio: e > 0 ? +(p / e).toFixed(2) : null };
+    }),
+  [tipoMesData]);
+
   const especiesActivas = useMemo(
     () => filtroEspecie ? [filtroEspecie] : (stats?.por_especie ?? []).filter(e => e.count > 0).map(e => e.especie),
     [stats, filtroEspecie],
@@ -176,13 +209,13 @@ const AnalisisMascotasPage = () => {
   const tiposActivos = filtroTipo ? [filtroTipo] : ['PERDIDA', 'ENCONTRADA'];
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-6 h-6 animate-spin text-brand-500" /><p className="text-sm">Cargando análisis...</p>
       </div><Footer /></div>
   );
   if (error || !stats) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 px-6 py-10"><Alert variant="error">{error || 'Sin datos'}</Alert></div><Footer /></div>
   );
 
@@ -190,6 +223,16 @@ const AnalisisMascotasPage = () => {
   const encontrados = stats.por_tipo.find(t => t.tipo === 'ENCONTRADA')?.count ?? 0;
   const resueltos   = stats.por_estado.find(e => e.estado === 'RESUELTO')?.count ?? 0;
   const enBusqueda  = stats.por_estado.find(e => e.estado === 'EN_BUSQUEDA')?.count ?? 0;
+  const abandonados = stats.por_estado.find(e => e.estado === 'ABANDONADO')?.count ?? 0;
+
+  /* indicadores derivados */
+  const tasaResolucion  = stats.total > 0 ? Math.round((resueltos / stats.total) * 100) : 0;
+  const tasaAbandono    = stats.total > 0 ? Math.round((abandonados / stats.total) * 100) : 0;
+  const ratioPE         = encontrados > 0 ? (perdidos / encontrados).toFixed(2) : '∞';
+  const meses           = stats.por_mes ?? [];
+  const mesPico         = [...meses].sort((a, b) => b.count - a.count)[0] ?? null;
+  const especiePrincipal = [...(stats.por_especie ?? [])].sort((a, b) => b.count - a.count)[0] ?? null;
+  const promedioMensual  = meses.length > 0 ? Math.round(stats.total / meses.length) : 0;
   const estadoPieData = (stats.por_estado ?? []).filter(e => e.count > 0)
     .map(e => ({ name: estadoLabel[e.estado] ?? e.estado, value: e.count, fill: ESTADO_COLORS[e.estado] ?? '#94a3b8' }));
   const tamanioData = (stats.por_tamanio ?? []).map((t, i) => ({
@@ -197,7 +240,7 @@ const AnalisisMascotasPage = () => {
   }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">
@@ -219,18 +262,12 @@ const AnalisisMascotasPage = () => {
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Desde</label>
-              <select value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls}>
-                <option value="">Inicio</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Hasta</label>
-              <select value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls}>
-                <option value="">Hoy</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
@@ -276,6 +313,38 @@ const AnalisisMascotasPage = () => {
           <KpiCard icon={CheckCircle} value={resueltos}    label="Casos resueltos"        color="bg-indigo-500" />
         </div>
 
+        {/* ── Indicadores derivados ─────────────────────────────────── */}
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Indicadores derivados</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <InsightCard
+              label="Tasa de resolución"
+              value={`${tasaResolucion}%`}
+              sub={`${resueltos} de ${stats.total} reportes resueltos`}
+              bar={tasaResolucion}
+            />
+            <InsightCard
+              label="Tasa de abandono"
+              value={`${tasaAbandono}%`}
+              sub={`${abandonados} reportes sin seguimiento`}
+            />
+            <InsightCard
+              label="Ratio pérdida / encontrada"
+              value={ratioPE}
+              sub={ratioPE !== '∞' ? (Number(ratioPE) > 1 ? 'Más reportes de pérdida' : 'Balance favorable') : 'Sin reportes encontradas'}
+            />
+            <InsightCard
+              label="Especie más reportada"
+              value={especiePrincipal ? (especieLabel[especiePrincipal.especie] ?? especiePrincipal.especie) : '—'}
+              sub={especiePrincipal ? `${especiePrincipal.count} reportes (${Math.round(especiePrincipal.count / stats.total * 100)}%)` : undefined}
+            />
+          </div>
+          <p className="text-xs text-slate-400 mt-3">
+            Promedio histórico: <span className="font-semibold text-slate-600">{promedioMensual}</span> reportes/mes
+            {mesPico && <> · Mes pico: <span className="font-semibold text-slate-600">{fmtMes(mesPico.mes)}</span> ({mesPico.count} reportes)</>}
+          </p>
+        </div>
+
         {/* Reportes por mes */}
         <ChartCard title={filtrosActivos ? `Reportes por mes (período filtrado · ${totalPeriodo} total)` : 'Reportes por mes'}>
           {mesData.length === 0 ? (
@@ -299,6 +368,43 @@ const AnalisisMascotasPage = () => {
             </ResponsiveContainer>
           )}
         </ChartCard>
+
+        {/* ── Variación mes a mes ──────────────────────────────────── */}
+        {crecimientoData.length > 1 && (
+          <ChartCard title="Variación mensual · reportes (barras) y crecimiento % vs mes anterior (línea)">
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={crecimientoData} margin={{ top: 4, right: 44, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+                <YAxis yAxisId="right" orientation="right" unit="%" tick={{ fontSize: 10, fill: '#f59e0b' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                <ReferenceLine yAxisId="right" y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+                <Bar yAxisId="left" dataKey="count" name="Reportes" fill="#f59e0b" fillOpacity={0.7} radius={[3, 3, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="pct" name="Variación %" stroke="#6366f1"
+                  strokeWidth={2} dot={{ r: 3, fill: '#6366f1' }} connectNulls={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+
+        {/* ── Ratio Pérdida / Encontrada por mes ───────────────────── */}
+        {ratioMesData.some(d => d.ratio !== null) && (
+          <ChartCard title="Ratio Pérdida/Encontrada por mes · valores >1 indican más pérdidas que encontradas">
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={ratioMesData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+                <Tooltip formatter={(v: number) => [`${v}`, 'Ratio P/E']} />
+                <ReferenceLine y={1} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: 'Equilibrio', position: 'right', fontSize: 10, fill: '#94a3b8' }} />
+                <Line type="monotone" dataKey="ratio" name="Ratio P/E" stroke="#ef4444"
+                  strokeWidth={2} dot={{ r: 4, fill: '#ef4444' }} connectNulls={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
 
         {/* Tipo por mes + Estado */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

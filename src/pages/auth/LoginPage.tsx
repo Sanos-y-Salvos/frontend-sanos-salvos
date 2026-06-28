@@ -32,7 +32,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex public-glass">
 
       {/* Panel izquierdo — decorativo */}
       <div className="hidden lg:flex lg:w-1/2 bg-mesh flex-col justify-between p-12 relative overflow-hidden">

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, TrendingUp, UserCheck, Building2, Loader2, X, SlidersHorizontal } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  ComposedChart, Line, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { userService } from '../../../services/userService';
@@ -54,6 +55,22 @@ const ChartCard = ({ title, children, className = '' }: {
   </motion.div>
 );
 
+const InsightCard = ({ label, value, sub, bar }: {
+  label: string; value: string | number; sub?: string; bar?: number;
+}) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+    <p className="text-2xl font-display font-bold text-slate-900 mt-1">{value}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    {bar !== undefined && (
+      <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(bar, 100)}%`, backgroundColor: bar >= 80 ? '#10b981' : bar >= 50 ? '#f59e0b' : '#ef4444' }} />
+      </div>
+    )}
+  </div>
+);
+
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
     <div className="bg-white border border-slate-200 rounded-xl shadow-lg px-3 py-2 text-xs">
@@ -88,11 +105,6 @@ const AnalisisUsuariosPage = () => {
       .catch(() => setError('Error al cargar los datos'))
       .finally(() => setLoading(false));
   }, []);
-
-  const allMonths = useMemo(
-    () => [...new Set((stats?.por_mes ?? []).map(d => d.mes))].sort(),
-    [stats],
-  );
 
   const filtrosActivos = !!(mesDesde || mesHasta || filtroTipo || filtroRol);
 
@@ -159,15 +171,32 @@ const AnalisisUsuariosPage = () => {
     [mesData],
   );
 
+  /* crecimiento mes a mes */
+  const crecimientoData = useMemo(() =>
+    mesData.map((d, i) => ({
+      mes: d.mes,
+      count: d.count,
+      pct: i === 0 || mesData[i - 1].count === 0
+        ? null
+        : +((d.count - mesData[i - 1].count) / mesData[i - 1].count * 100).toFixed(1),
+    })),
+  [mesData]);
+
+  /* base acumulada histórica (no filtrada) */
+  const acumuladoData = useMemo(() => {
+    let acum = 0;
+    return (stats?.por_mes ?? []).map(d => { acum += d.count; return { mes: fmtMes(d.mes), total: acum }; });
+  }, [stats]);
+
   if (loading) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-6 h-6 animate-spin text-brand-500" /><p className="text-sm">Cargando análisis...</p>
       </div><Footer />
     </div>
   );
   if (error || !stats) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 px-6 py-10"><Alert variant="error">{error || 'Sin datos'}</Alert></div><Footer />
     </div>
   );
@@ -180,8 +209,17 @@ const AnalisisUsuariosPage = () => {
   const tiposActivos = filtroTipo ? [filtroTipo] : ['ciudadano', 'institucion'];
   const rolesActivos = filtroRol ? [filtroRol] : ['ciudadano','veterinaria','municipalidad','moderador'];
 
+  /* indicadores derivados */
+  const tasaActivacion   = stats.total > 0 ? Math.round((stats.activos / stats.total) * 100) : 0;
+  const inactivos        = stats.total - stats.activos;
+  const meses            = stats.por_mes ?? [];
+  const promedioMensual  = meses.length > 0 ? Math.round(stats.total / meses.length) : 0;
+  const mesPico          = [...meses].sort((a, b) => b.count - a.count)[0] ?? null;
+  const topRegion        = [...(stats.por_region ?? [])].sort((a, b) => b.count - a.count)[0] ?? null;
+  const pctTopRegion     = topRegion && stats.total > 0 ? Math.round((topRegion.count / stats.total) * 100) : 0;
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">
@@ -203,18 +241,12 @@ const AnalisisUsuariosPage = () => {
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Desde</label>
-              <select value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls}>
-                <option value="">Inicio</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Hasta</label>
-              <select value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls}>
-                <option value="">Hoy</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
@@ -257,10 +289,45 @@ const AnalisisUsuariosPage = () => {
           <KpiCard icon={Users}      value={stats.total}   label="Total usuarios"    color="bg-indigo-500"
             sub={filtrosActivos ? `${totalPeriodo} en el período` : undefined} />
           <KpiCard icon={UserCheck}  value={stats.activos} label="Cuentas activas"   color="bg-emerald-500" />
+
           <KpiCard icon={TrendingUp} value={`${pct}%`}     label="Tasa de actividad" color="bg-violet-500" />
           <KpiCard icon={Building2}
             value={(stats.por_tipo ?? []).find(t => t.tipo === 'institucion')?.count ?? 0}
             label="Instituciones" color="bg-amber-500" />
+        </div>
+
+        {/* ── Indicadores derivados ─────────────────────────────────── */}
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Indicadores derivados</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <InsightCard
+              label="Tasa de activación"
+              value={`${tasaActivacion}%`}
+              sub={`${stats.activos} activos de ${stats.total} registrados`}
+              bar={tasaActivacion}
+            />
+            <InsightCard
+              label="Cuentas inactivas"
+              value={inactivos}
+              sub={inactivos > 0 ? `${100 - tasaActivacion}% del total` : 'Ninguna inactiva'}
+            />
+            <InsightCard
+              label="Promedio mensual"
+              value={promedioMensual}
+              sub="nuevos usuarios por mes (histórico)"
+            />
+            <InsightCard
+              label="Mes pico de registros"
+              value={mesPico ? fmtMes(mesPico.mes) : '—'}
+              sub={mesPico ? `${mesPico.count} nuevos usuarios` : undefined}
+            />
+          </div>
+          {topRegion && (
+            <p className="text-xs text-slate-400 mt-3">
+              Región con más usuarios: <span className="font-semibold text-slate-600">{topRegion.region}</span>
+              {' '}({topRegion.count} usuarios · {pctTopRegion}% del total)
+            </p>
+          )}
         </div>
 
         {/* Registros por mes */}
@@ -286,6 +353,48 @@ const AnalisisUsuariosPage = () => {
             </ResponsiveContainer>
           )}
         </ChartCard>
+
+        {/* ── Variación mes a mes ──────────────────────────────────── */}
+        {crecimientoData.length > 1 && (
+          <ChartCard title="Variación mensual · registros (barras) y crecimiento % vs mes anterior (línea)">
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={crecimientoData} margin={{ top: 4, right: 44, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+                <YAxis yAxisId="right" orientation="right" unit="%" tick={{ fontSize: 10, fill: '#f59e0b' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                <ReferenceLine yAxisId="right" y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+                <Bar yAxisId="left" dataKey="count" name="Registros" fill="#6366f1" fillOpacity={0.7} radius={[3, 3, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="pct" name="Variación %" stroke="#f59e0b"
+                  strokeWidth={2} dot={{ r: 3, fill: '#f59e0b' }} connectNulls={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
+
+        {/* ── Crecimiento acumulado ─────────────────────────────────── */}
+        {acumuladoData.length > 1 && (
+          <ChartCard title="Crecimiento acumulado de usuarios registrados (histórico completo)">
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={acumuladoData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gradAcum" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="total" name="Total acumulado" stroke="#10b981"
+                  strokeWidth={2} fill="url(#gradAcum)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
 
         {/* Tipo por mes + Distribución por rol */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

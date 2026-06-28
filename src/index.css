@@ -45,4 +45,229 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
+
+  /* ── Public · Warm Glassmorphism ────────────────────────────────────────
+     Friendly light glassmorphism for all public-facing pages.
+     Warm cream background with soft teal + amber blobs fits a platform
+     built around hope, community, and reuniting families with pets.
+     Text stays dark — no colour inversions needed on light glass. */
+
+  .public-glass {
+    background-color: #fdf9f5;
+    background-image:
+      radial-gradient(at 8%  12%, rgba(20,184,166, 0.16) 0px, transparent 50%),
+      radial-gradient(at 92% 8%,  rgba(251,146,60, 0.13) 0px, transparent 46%),
+      radial-gradient(at 74% 90%, rgba(20,184,166, 0.12) 0px, transparent 50%),
+      radial-gradient(at 5%  85%, rgba(245,158,11, 0.10) 0px, transparent 44%),
+      radial-gradient(at 48% 48%, rgba(59,130,246, 0.06) 0px, transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* White surfaces → warm frosted glass */
+  .public-glass .bg-white {
+    background: rgba(255,255,255,0.82) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+  }
+
+  /* Muted-bg sections → semi-transparent so the warm gradient peeks through */
+  .public-glass .bg-slate-50 { background: rgba(248,250,252,0.52) !important; }
+
+  /* Borders → luminous glass edges */
+  .public-glass .border-slate-100 { border-color: rgba(255,255,255,0.72) !important; }
+  .public-glass .border-slate-200 { border-color: rgba(255,255,255,0.60) !important; }
+
+  /* Shadows → warm teal-tinted depth + top light reflection */
+  .public-glass .shadow-sm {
+    box-shadow:
+      0 4px 16px -4px rgba(20,184,166,0.12),
+      0 2px 8px -2px  rgba(0,0,0,0.05),
+      inset 0 1px 0 0 rgba(255,255,255,0.90) !important;
+  }
+  .public-glass .shadow-md {
+    box-shadow:
+      0 8px 28px -6px  rgba(20,184,166,0.16),
+      0 4px 12px -4px  rgba(0,0,0,0.07),
+      inset 0 1px 0 0  rgba(255,255,255,0.92) !important;
+  }
+  .public-glass .shadow-lg {
+    box-shadow:
+      0 16px 44px -8px  rgba(20,184,166,0.18),
+      0 8px 18px -6px   rgba(0,0,0,0.08),
+      inset 0 1px 0 0   rgba(255,255,255,0.92) !important;
+  }
+  .public-glass .shadow-xl {
+    box-shadow:
+      0 24px 56px -12px rgba(20,184,166,0.20),
+      0 12px 24px -8px  rgba(0,0,0,0.09),
+      inset 0 1px 0 0   rgba(255,255,255,0.95) !important;
+  }
+
+  /* ── Admin · Dark Glassmorphism ─────────────────────────────────────────
+     Professional dark glass theme scoped to .admin-glass.
+     Public site is completely untouched.
+     Deep navy background with colored light blobs creates the depth
+     needed for frosted glass cards to read. */
+
+  .admin-glass {
+    background-color: #020617;
+    background-image:
+      radial-gradient(at 15% 20%, rgba(20,184,166, 0.18) 0px, transparent 52%),
+      radial-gradient(at 85% 8%,  rgba(99,102,241, 0.14) 0px, transparent 44%),
+      radial-gradient(at 80% 82%, rgba(13,148,136, 0.15) 0px, transparent 50%),
+      radial-gradient(at 12% 88%, rgba(139,92,246, 0.12) 0px, transparent 46%),
+      radial-gradient(at 50% 45%, rgba(6,182,212,  0.07) 0px, transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* ── Glass surface: white cards become dark frosted glass ── */
+  .admin-glass .bg-white {
+    background: rgba(255,255,255,0.06) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+  }
+
+  /* Tooltips & modals need higher opacity to stay readable on dark bg */
+  .admin-glass .bg-white.shadow-lg,
+  .admin-glass .bg-white.shadow-xl {
+    background: rgba(2,6,23,0.90) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+
+  /* ── Borders → subtle glass edges ── */
+  .admin-glass .border-slate-100 { border-color: rgba(255,255,255,0.08) !important; }
+  .admin-glass .border-slate-200 { border-color: rgba(255,255,255,0.11) !important; }
+  .admin-glass .border-slate-50  { border-color: rgba(255,255,255,0.05) !important; }
+
+  /* ── Text: inverted luminance scale for dark background ── */
+  .admin-glass .text-slate-900 { color: #f8fafc !important; }
+  .admin-glass .text-slate-800 { color: #f1f5f9 !important; }
+  .admin-glass .text-slate-700 { color: #e2e8f0 !important; }
+  .admin-glass .text-slate-600 { color: #cbd5e1 !important; }
+  .admin-glass .text-slate-500 { color: #94a3b8 !important; }
+  .admin-glass .text-slate-400 { color: #94a3b8 !important; }
+  .admin-glass .text-slate-300 { color: #64748b !important; }
+
+  /* ── Colored badge & icon backgrounds → translucent glow ── */
+  .admin-glass .bg-slate-50    { background: rgba(148,163,184,0.08)  !important; }
+  .admin-glass .bg-slate-100   { background: rgba(148,163,184,0.12)  !important; }
+  .admin-glass .bg-slate-200   { background: rgba(148,163,184,0.17)  !important; }
+  .admin-glass .bg-emerald-50  { background: rgba(16,185,129, 0.13)  !important; }
+  .admin-glass .bg-emerald-100 { background: rgba(16,185,129, 0.17)  !important; }
+  .admin-glass .bg-blue-50     { background: rgba(59,130,246, 0.13)  !important; }
+  .admin-glass .bg-blue-100    { background: rgba(59,130,246, 0.17)  !important; }
+  .admin-glass .bg-purple-50   { background: rgba(147,51,234, 0.13)  !important; }
+  .admin-glass .bg-purple-100  { background: rgba(147,51,234, 0.17)  !important; }
+  .admin-glass .bg-rose-50     { background: rgba(244,63,94,  0.13)  !important; }
+  .admin-glass .bg-rose-100    { background: rgba(244,63,94,  0.17)  !important; }
+  .admin-glass .bg-amber-50    { background: rgba(245,158,11, 0.13)  !important; }
+  .admin-glass .bg-amber-100   { background: rgba(245,158,11, 0.17)  !important; }
+  .admin-glass .bg-orange-100  { background: rgba(249,115,22, 0.17)  !important; }
+  .admin-glass .bg-brand-50    { background: rgba(20,184,166, 0.13)  !important; }
+  .admin-glass .bg-brand-100   { background: rgba(20,184,166, 0.17)  !important; }
+  .admin-glass .bg-indigo-50   { background: rgba(99,102,241, 0.13)  !important; }
+  .admin-glass .bg-indigo-100  { background: rgba(99,102,241, 0.17)  !important; }
+  .admin-glass .bg-teal-50     { background: rgba(20,184,166, 0.10)  !important; }
+
+  /* ── Colored text → vivid / luminous on dark ── */
+  .admin-glass .text-emerald-600 { color: #34d399 !important; }
+  .admin-glass .text-emerald-700 { color: #6ee7b7 !important; }
+  .admin-glass .text-blue-600    { color: #60a5fa !important; }
+  .admin-glass .text-blue-700    { color: #93c5fd !important; }
+  .admin-glass .text-purple-600  { color: #c084fc !important; }
+  .admin-glass .text-purple-700  { color: #d8b4fe !important; }
+  .admin-glass .text-rose-600    { color: #fb7185 !important; }
+  .admin-glass .text-rose-700    { color: #fda4af !important; }
+  .admin-glass .text-amber-600   { color: #fbbf24 !important; }
+  .admin-glass .text-amber-700   { color: #fde68a !important; }
+  .admin-glass .text-orange-700  { color: #fed7aa !important; }
+  .admin-glass .text-brand-600   { color: #2dd4bf !important; }
+  .admin-glass .text-brand-700   { color: #5eead4 !important; }
+  .admin-glass .text-indigo-600  { color: #818cf8 !important; }
+  .admin-glass .text-indigo-700  { color: #a5b4fc !important; }
+  .admin-glass .text-teal-600    { color: #2dd4bf !important; }
+  .admin-glass .text-teal-700    { color: #5eead4 !important; }
+
+  /* ── Badge borders → glowing glass edges ── */
+  .admin-glass .border-blue-200    { border-color: rgba(59,130,246,  0.30) !important; }
+  .admin-glass .border-emerald-200 { border-color: rgba(16,185,129,  0.30) !important; }
+  .admin-glass .border-amber-200   { border-color: rgba(245,158,11,  0.30) !important; }
+  .admin-glass .border-rose-200    { border-color: rgba(244,63,94,   0.30) !important; }
+  .admin-glass .border-purple-200  { border-color: rgba(147,51,234,  0.30) !important; }
+  .admin-glass .border-orange-200  { border-color: rgba(249,115,22,  0.30) !important; }
+  .admin-glass .border-brand-200   { border-color: rgba(20,184,166,  0.30) !important; }
+  .admin-glass .border-indigo-200  { border-color: rgba(99,102,241,  0.30) !important; }
+
+  /* ── Inputs, selects, textareas ── */
+  .admin-glass input:not([type="file"]),
+  .admin-glass select,
+  .admin-glass textarea {
+    background: rgba(255,255,255,0.05) !important;
+    color: #f1f5f9 !important;
+    border-color: rgba(255,255,255,0.10) !important;
+  }
+  .admin-glass input::placeholder,
+  .admin-glass textarea::placeholder { color: rgba(148,163,184,0.50) !important; }
+  .admin-glass select option { background-color: #1e293b; color: #f1f5f9; }
+
+  /* ── Dark buttons / active states → bright glass highlight ── */
+  .admin-glass .bg-slate-900 { background: rgba(255,255,255,0.16) !important; }
+
+  /* ── Transparent bg hover overrides ── */
+  .admin-glass .hover\:bg-slate-50:hover   { background: rgba(255,255,255,0.05) !important; }
+  .admin-glass .hover\:bg-slate-100:hover  { background: rgba(255,255,255,0.08) !important; }
+  .admin-glass .hover\:bg-slate-200:hover  { background: rgba(255,255,255,0.12) !important; }
+  .admin-glass .hover\:bg-slate-800:hover  { background: rgba(255,255,255,0.22) !important; }
+  .admin-glass .hover\:bg-white:hover      { background: rgba(255,255,255,0.08) !important; }
+  .admin-glass .hover\:bg-emerald-200:hover { background: rgba(16,185,129, 0.28) !important; }
+  .admin-glass .hover\:bg-rose-200:hover    { background: rgba(244,63,94,  0.28) !important; }
+
+  /* ── Shadows → deep dark depth + top light reflection ── */
+  .admin-glass .shadow-sm {
+    box-shadow:
+      0 8px 32px -8px  rgba(0,0,0,0.55),
+      inset 0 1px 0 0  rgba(255,255,255,0.08) !important;
+  }
+  .admin-glass .shadow-md {
+    box-shadow:
+      0 16px 48px -12px rgba(0,0,0,0.60),
+      inset 0 1px 0 0   rgba(255,255,255,0.10) !important;
+  }
+  .admin-glass .shadow-lg {
+    box-shadow:
+      0 24px 56px -16px rgba(0,0,0,0.65),
+      inset 0 1px 0 0   rgba(255,255,255,0.12) !important;
+  }
+  .admin-glass .shadow-xl {
+    box-shadow:
+      0 32px 64px -20px rgba(0,0,0,0.70),
+      inset 0 1px 0 0   rgba(255,255,255,0.14) !important;
+  }
+
+  /* ── Recharts SVG text → readable on dark ── */
+  .admin-glass .recharts-cartesian-axis-tick text { fill: #94a3b8; }
+  .admin-glass .recharts-label-list text          { fill: #94a3b8 !important; }
+  .admin-glass .recharts-legend-item-text,
+  .admin-glass .recharts-legend-item-text span    { color: #94a3b8 !important; }
+
+  /* ── Interactive card lift + glass glow on hover ── */
+  .admin-glass button.rounded-2xl,
+  .admin-glass a.rounded-2xl {
+    transition: transform .25s ease, box-shadow .25s ease, background .2s ease;
+  }
+  .admin-glass button.rounded-2xl:hover,
+  .admin-glass a.rounded-2xl:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.10) !important;
+    box-shadow:
+      0 16px 40px -8px  rgba(0,0,0,0.60),
+      0 0 0 1px         rgba(255,255,255,0.10),
+      inset 0 1px 0 0   rgba(255,255,255,0.14) !important;
+  }
+
+  /* ── Mobile: space for bottom tab bar ── */
+  @media (max-width: 767px) {
+    .admin-glass main { padding-bottom: 5rem; }
+  }
 }

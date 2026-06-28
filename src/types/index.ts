@@ -112,6 +112,7 @@ export interface Mensaje {
   autorId: string;
   emailAutor: string;
   contenido: string;
+  imagenUrl?: string;
   creadoEn: string;
 }
 

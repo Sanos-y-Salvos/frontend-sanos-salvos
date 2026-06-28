@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storage } from '../utils/storage';
 import type { Sala, Mensaje, SalaDenuncia } from '../types';
 
-const MENSAJERIA_URL = import.meta.env.VITE_MS_MENSAJERIA_URL ?? 'http://localhost:3006';
+export const MENSAJERIA_URL = import.meta.env.VITE_MS_MENSAJERIA_URL || 'http://localhost:3006';
 
 const mensajeriaApi = axios.create({ baseURL: MENSAJERIA_URL });
 mensajeriaApi.interceptors.request.use((config) => {
@@ -52,4 +52,18 @@ export interface SalaReportada {
 export const listarSalasReportadas = async (): Promise<SalaReportada[]> => {
   const { data } = await mensajeriaApi.get<{ ok: boolean; data: SalaReportada[] }>('/salas/reportadas');
   return data.data;
+};
+
+export const listarSalasClausuradas = async (): Promise<Sala[]> => {
+  const { data } = await mensajeriaApi.get<{ ok: boolean; data: Sala[] }>('/salas/clausuradas');
+  return data.data;
+};
+
+export const uploadImagenMensaje = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('imagen', file);
+  const { data } = await mensajeriaApi.post<{ ok: boolean; url: string }>('/mensajes/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data.url;
 };

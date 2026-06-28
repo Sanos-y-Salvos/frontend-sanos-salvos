@@ -7,8 +7,9 @@ import {
   TicketCheck,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useSoporteSocket } from '../../hooks/useSoporteSocket';
 import { ticketService } from '../../services/ticketService';
-import type { Ticket } from '../../types';
+import type { Ticket, Comentario } from '../../types';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BotonVolver from '../../components/layout/BotonVolver';
@@ -41,14 +42,25 @@ const DetalleTicket = ({
   const [comentario, setComentario] = useState('');
   const [enviando, setEnviando]     = useState(false);
   const [error, setError]           = useState('');
+  const [comentariosRT, setComentariosRT] = useState<Comentario[]>([]);
+
+  useEffect(() => { setComentariosRT([]); }, [ticket.id]);
+
+  useSoporteSocket(ticket.id, (nuevo) => {
+    setComentariosRT((prev) =>
+      prev.some((c) => c.id === nuevo.id) ? prev : [...prev, nuevo],
+    );
+  });
+
+  const todosComentarios = [...ticket.comentarios, ...comentariosRT].filter(
+    (c, i, arr) => arr.findIndex((x) => x.id === c.id) === i,
+  );
 
   const handleEnviar = async () => {
     if (!comentario.trim()) return;
     setEnviando(true); setError('');
     try {
       await ticketService.agregarComentario(ticket.id, comentario);
-      const actualizado = await ticketService.verTicket(ticket.id);
-      onActualizar(actualizado);
       setComentario('');
     } catch {
       setError('Error al enviar el comentario');
@@ -58,7 +70,7 @@ const DetalleTicket = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
       <div className="bg-white border-b border-slate-100">
         <div className="max-w-2xl mx-auto px-6 py-5">
@@ -92,14 +104,14 @@ const DetalleTicket = ({
               <h2 className="font-semibold text-slate-800 text-sm">Conversación</h2>
             </div>
 
-            {ticket.comentarios.length === 0 ? (
+            {todosComentarios.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
                 <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" strokeWidth={1} />
                 <p className="text-sm">No hay comentarios aún</p>
               </div>
             ) : (
               <div className="space-y-3 mb-4">
-                {ticket.comentarios.map((c) => {
+                {todosComentarios.map((c) => {
                   const esAdmin = c.tipo_autor === 'administrador';
                   return (
                     <div key={c.id} className={`rounded-xl p-4 text-sm ${
@@ -186,7 +198,7 @@ const TicketsPage = () => {
 
   /* No autenticado */
   if (!loadingAuth && !isAuthenticated) return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <motion.div
@@ -214,7 +226,7 @@ const TicketsPage = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">

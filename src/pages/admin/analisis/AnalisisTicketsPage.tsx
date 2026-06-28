@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ClipboardList, Clock, CheckCircle, AlertCircle, Loader2, X, SlidersHorizontal } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  ComposedChart, Line, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { ticketService } from '../../../services/ticketService';
@@ -59,6 +60,22 @@ const ChartCard = ({ title, children, className = '' }: {
   </motion.div>
 );
 
+const InsightCard = ({ label, value, sub, bar }: {
+  label: string; value: string | number; sub?: string; bar?: number;
+}) => (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+    <p className="text-2xl font-display font-bold text-slate-900 mt-1">{value}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    {bar !== undefined && (
+      <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(bar, 100)}%`, backgroundColor: bar >= 80 ? '#10b981' : bar >= 50 ? '#f59e0b' : '#ef4444' }} />
+      </div>
+    )}
+  </div>
+);
+
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
     <div className="bg-white border border-slate-200 rounded-xl shadow-lg px-3 py-2 text-xs">
@@ -89,11 +106,6 @@ const AnalisisTicketsPage = () => {
       .catch(() => setError('Error al cargar los datos'))
       .finally(() => setLoading(false));
   }, []);
-
-  const allMonths = useMemo(
-    () => [...new Set((stats?.por_mes ?? []).map(d => d.mes))].sort(),
-    [stats],
-  );
 
   const filtrosActivos = !!(mesDesde || mesHasta || filtroCateg || filtroEstado);
   const resetFiltros = () => { setMesDesde(''); setMesHasta(''); setFiltroCateg(''); setFiltroEstado(''); };
@@ -154,14 +166,25 @@ const AnalisisTicketsPage = () => {
   const totalPeriodo = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
   const catsActivas  = filtroCateg ? [filtroCateg] : ['problema_tecnico', 'reporte_abuso', 'otro'];
 
+  /* crecimiento mes a mes */
+  const crecimientoData = useMemo(() =>
+    mesData.map((d, i) => ({
+      mes: d.mes,
+      count: d.count,
+      pct: i === 0 || mesData[i - 1].count === 0
+        ? null
+        : +((d.count - mesData[i - 1].count) / mesData[i - 1].count * 100).toFixed(1),
+    })),
+  [mesData]);
+
   if (loading) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-400">
         <Loader2 className="w-6 h-6 animate-spin text-brand-500" /><p className="text-sm">Cargando análisis...</p>
       </div><Footer /></div>
   );
   if (error || !stats) return (
-    <div className="min-h-screen flex flex-col bg-slate-50"><Navbar />
+    <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 px-6 py-10"><Alert variant="error">{error || 'Sin datos'}</Alert></div><Footer /></div>
   );
 
@@ -180,8 +203,17 @@ const AnalisisTicketsPage = () => {
       fill: CAT_COLORS[t.categoria] ?? '#94a3b8',
     }));
 
+  /* indicadores derivados */
+  const backlog           = abiertos + enProceso;
+  const pctBacklog        = stats.total > 0 ? Math.round((backlog / stats.total) * 100) : 0;
+  const promedioMensual   = mesData.length > 0 ? Math.round(mesData.reduce((s, d) => s + d.count, 0) / mesData.length) : 0;
+  const tiempoGlobal      = tiempoData.length > 0
+    ? (tiempoData.reduce((s, d) => s + d.dias, 0) / tiempoData.length).toFixed(1)
+    : null;
+  const categoriaPrincipal = [...(stats.por_categoria ?? [])].sort((a, b) => b.count - a.count)[0] ?? null;
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">
@@ -203,18 +235,12 @@ const AnalisisTicketsPage = () => {
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Desde</label>
-              <select value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls}>
-                <option value="">Inicio</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
               <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">Hasta</label>
-              <select value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls}>
-                <option value="">Hoy</option>
-                {allMonths.map(m => <option key={m} value={m}>{fmtMes(m)}</option>)}
-              </select>
+              <input type="month" value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={selectCls} />
             </div>
 
             <div className="flex flex-col gap-0.5">
@@ -259,6 +285,41 @@ const AnalisisTicketsPage = () => {
           <KpiCard icon={Clock}         value={`${tasaResolucion}%`}   label="Tasa de resolución"     color="bg-violet-500" />
         </div>
 
+        {/* ── Indicadores derivados ─────────────────────────────────── */}
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3">Indicadores derivados</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <InsightCard
+              label="Backlog activo"
+              value={backlog}
+              sub={`${pctBacklog}% del total aún sin cerrar`}
+              bar={100 - pctBacklog}
+            />
+            <InsightCard
+              label="Tasa de cierre"
+              value={`${tasaResolucion}%`}
+              sub={`${finalizados} tickets finalizados`}
+              bar={tasaResolucion}
+            />
+            <InsightCard
+              label="Promedio mensual"
+              value={promedioMensual}
+              sub="tickets por mes (período filtrado)"
+            />
+            <InsightCard
+              label="Tiempo promedio global"
+              value={tiempoGlobal ? `${tiempoGlobal} días` : '—'}
+              sub="promedio entre categorías resueltas"
+            />
+          </div>
+          {categoriaPrincipal && (
+            <p className="text-xs text-slate-400 mt-3">
+              Categoría más frecuente: <span className="font-semibold text-slate-600">{CAT_LABELS[categoriaPrincipal.categoria] ?? categoriaPrincipal.categoria}</span>
+              {' '}({categoriaPrincipal.count} tickets · {stats.total > 0 ? Math.round(categoriaPrincipal.count / stats.total * 100) : 0}% del total)
+            </p>
+          )}
+        </div>
+
         {/* Tickets por mes */}
         <ChartCard title={filtrosActivos ? `Tickets por mes (período filtrado · ${totalPeriodo} total)` : 'Tickets por mes'}>
           {mesData.length === 0 ? (
@@ -282,6 +343,26 @@ const AnalisisTicketsPage = () => {
             </ResponsiveContainer>
           )}
         </ChartCard>
+
+        {/* ── Variación mes a mes ──────────────────────────────────── */}
+        {crecimientoData.length > 1 && (
+          <ChartCard title="Variación mensual · tickets (barras) y crecimiento % vs mes anterior (línea)">
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={crecimientoData} margin={{ top: 4, right: 44, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#94a3b8' }} allowDecimals={false} />
+                <YAxis yAxisId="right" orientation="right" unit="%" tick={{ fontSize: 10, fill: '#f59e0b' }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                <ReferenceLine yAxisId="right" y={0} stroke="#94a3b8" strokeDasharray="3 3" />
+                <Bar yAxisId="left" dataKey="count" name="Tickets" fill="#6366f1" fillOpacity={0.7} radius={[3, 3, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="pct" name="Variación %" stroke="#f59e0b"
+                  strokeWidth={2} dot={{ r: 3, fill: '#f59e0b' }} connectNulls={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        )}
 
         {/* Estado y Categoría */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -340,18 +421,35 @@ const AnalisisTicketsPage = () => {
 
         {/* Tiempo de resolución */}
         {tiempoData.length > 0 && (
-          <ChartCard title="Tiempo promedio de resolución por categoría (días)">
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={tiempoData} margin={{ top: 4, right: 40, left: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="categoria" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} unit=" d" />
-                <Tooltip formatter={(v: number) => [`${v} días`, 'Promedio']} />
-                <Bar dataKey="dias" name="Días promedio" radius={[4, 4, 0, 0]}>
-                  {tiempoData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <ChartCard title="Tiempo promedio de resolución por categoría (días hasta cierre)">
+            <div className="space-y-4">
+              {tiempoData.map(t => {
+                const maxDias = Math.max(...tiempoData.map(d => d.dias), 1);
+                const pct = Math.round((t.dias / maxDias) * 100);
+                const nivel = t.dias <= 2 ? 'Rápido' : t.dias <= 5 ? 'Moderado' : 'Lento';
+                const nivelColor = t.dias <= 2 ? 'text-emerald-600' : t.dias <= 5 ? 'text-amber-600' : 'text-rose-500';
+                return (
+                  <div key={t.categoria}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-slate-700">{t.categoria}</span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs font-semibold ${nivelColor}`}>{nivel}</span>
+                        <span className="text-sm font-bold text-slate-900">{t.dias} días</span>
+                      </div>
+                    </div>
+                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: t.fill }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {tiempoGlobal && (
+              <p className="text-xs text-slate-400 mt-4 pt-3 border-t border-slate-100">
+                Promedio global entre categorías: <span className="font-semibold text-slate-600">{tiempoGlobal} días</span>
+              </p>
+            )}
           </ChartCard>
         )}
 

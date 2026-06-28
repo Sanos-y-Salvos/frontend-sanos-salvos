@@ -15,7 +15,7 @@ const fadeUp = (delay = 0) => ({
 });
 
 const AboutPage = () => (
-  <div className="min-h-screen flex flex-col bg-slate-50">
+  <div className="min-h-screen flex flex-col public-glass">
     <Navbar />
 
     {/* Hero */}

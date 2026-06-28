@@ -66,7 +66,7 @@ const ReporteDetallePage = () => {
   }, [id, user?.id]);
 
   if (cargando) return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-500">
         <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
@@ -77,7 +77,7 @@ const ReporteDetallePage = () => {
   );
 
   if (error || !reporte) return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-rose-500">
         <AlertCircle className="w-8 h-8" />
@@ -103,7 +103,7 @@ const ReporteDetallePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       {/* Page header */}

@@ -7,7 +7,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
 import { regionService } from '../../services/regionService';
-import { validateField } from '../../utils/validators';
+import { validateField, sanitizeNombre, formatDireccion } from '../../utils/validators';
 import type { User as UserType } from '../../types';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
@@ -240,7 +240,7 @@ const PerfilPage = () => {
   const esInstitucion = perfilData?.tipo === 'institucion';
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       {/* Page header */}
@@ -350,21 +350,21 @@ const PerfilPage = () => {
                     <>
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="Primer nombre" value={primerNombre}
-                          onChange={e => onChange('primer_nombre', e.target.value, setPrimerNombre)}
+                          onChange={e => onChange('primer_nombre', sanitizeNombre(e.target.value), setPrimerNombre)}
                           onBlur={e => touch('primer_nombre', e.target.value)}
                           error={err('primer_nombre')} />
                         <Input label="Segundo nombre" value={segundoNombre}
-                          onChange={e => onChange('segundo_nombre', e.target.value, setSegundoNombre)}
+                          onChange={e => onChange('segundo_nombre', sanitizeNombre(e.target.value), setSegundoNombre)}
                           onBlur={e => touch('segundo_nombre', e.target.value)}
                           error={err('segundo_nombre')} />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <Input label="Primer apellido" value={apellidoPaterno}
-                          onChange={e => onChange('apellido_paterno', e.target.value, setApellidoPaterno)}
+                          onChange={e => onChange('apellido_paterno', sanitizeNombre(e.target.value), setApellidoPaterno)}
                           onBlur={e => touch('apellido_paterno', e.target.value)}
                           error={err('apellido_paterno')} />
                         <Input label="Segundo apellido" value={apellidoMaterno}
-                          onChange={e => onChange('apellido_materno', e.target.value, setApellidoMaterno)}
+                          onChange={e => onChange('apellido_materno', sanitizeNombre(e.target.value), setApellidoMaterno)}
                           onBlur={e => touch('apellido_materno', e.target.value)}
                           error={err('apellido_materno')} />
                       </div>
@@ -437,8 +437,9 @@ const PerfilPage = () => {
                     </Select>
                     <Input label="Dirección" value={direccion}
                       icon={<MapPin className="w-4 h-4" />}
-                      onChange={e => onChange('direccion', e.target.value, setDireccion)}
+                      onChange={e => onChange('direccion', formatDireccion(e.target.value), setDireccion)}
                       onBlur={e => touch('direccion', e.target.value)}
+                      placeholder="Ej: Lago Riñihue 132"
                       error={err('direccion')} />
                   </div>
 

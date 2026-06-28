@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, TicketCheck, Loader2, MapPin, Building2,
   UserCircle, Tag, Activity, TrendingUp, RefreshCw,
-  PawPrint, Search, CheckCircle2,
+  PawPrint, Search, CheckCircle2, BarChart2, ShieldAlert, ArrowRight,
 } from 'lucide-react';
 import {
   PieChart, Pie, Cell, Tooltip, Legend,
@@ -68,22 +69,31 @@ const KpiCard = ({ label, value, icon: Icon, color }: {
 );
 
 /* ── Card contenedor ─────────────────────────────────────────────────── */
-const ChartCard = ({ title, icon: Icon, delay = 0, children }: {
-  title: string; icon: React.ElementType; delay?: number; children: React.ReactNode;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay }}
-    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5"
-  >
-    <div className="flex items-center gap-2 mb-4">
-      <Icon className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
-      <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</h3>
-    </div>
-    {children}
-  </motion.div>
-);
+const ChartCard = ({ title, icon: Icon, delay = 0, children, to }: {
+  title: string; icon: React.ElementType; delay?: number; children: React.ReactNode; to?: string;
+}) => {
+  const inner = (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className={`bg-white rounded-2xl border shadow-sm p-5 transition-all duration-200 ${
+        to
+          ? 'border-slate-100 hover:border-brand-200 hover:shadow-md cursor-pointer'
+          : 'border-slate-100'
+      }`}
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <Icon className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
+        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</h3>
+        {to && <ArrowRight className="w-3 h-3 text-slate-300 ml-auto group-hover:text-brand-400 transition-colors" />}
+      </div>
+      {children}
+    </motion.div>
+  );
+  if (to) return <Link to={to} className="block group">{inner}</Link>;
+  return inner;
+};
 
 /* ── Donut chart ─────────────────────────────────────────────────────── */
 const DonutChart = ({ data, colors }: {
@@ -145,13 +155,21 @@ const HBarChart = ({ data, color, labelWidth = 100 }: {
 };
 
 /* ── Sección header ──────────────────────────────────────────────────── */
-const SectionHeader = ({ icon: Icon, title, meta }: {
-  icon: React.ElementType; title: string; meta?: string;
+const SectionHeader = ({ icon: Icon, title, meta, href }: {
+  icon: React.ElementType; title: string; meta?: string; href?: string;
 }) => (
   <div className="flex items-center gap-2 mb-4">
     <Icon className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
     <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">{title}</h2>
-    {meta && <span className="ml-auto text-xs text-slate-400 font-medium">{meta}</span>}
+    <div className="ml-auto flex items-center gap-3">
+      {meta && <span className="text-xs text-slate-400 font-medium">{meta}</span>}
+      {href && (
+        <Link to={href} className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+          Ver análisis
+          <ArrowRight className="w-3 h-3" />
+        </Link>
+      )}
+    </div>
   </div>
 );
 
@@ -168,9 +186,31 @@ const CATEGORIA_LABEL: Record<string, string> = {
 const ESTADO_REPORTE_LABEL: Record<string, string> = {
   EN_BUSQUEDA: 'En búsqueda', RESUELTO: 'Resuelto', ABANDONADO: 'Abandonado', OCULTO: 'Oculto',
 };
-const ESPECIE_EMOJI: Record<string, string> = {
-  PERRO: '🐶', GATO: '🐱', AVE: '🐦', CONEJO: '🐰', HAMSTER: '🐹', REPTIL: '🦎', OTRO: '🐾',
-};
+
+const QUICK_LINKS = [
+  { icon: TicketCheck, label: 'Tickets',  desc: 'Gestionar soporte',       href: '/admin/tickets',           color: 'bg-amber-100', text: 'text-amber-600' },
+  { icon: Users,       label: 'Usuarios', desc: 'Administrar cuentas',     href: '/admin/usuarios',          color: 'bg-blue-100',  text: 'text-blue-600'  },
+  { icon: ShieldAlert, label: 'Mensajes', desc: 'Moderar conversaciones',  href: '/admin/mensajes',          color: 'bg-rose-100',  text: 'text-rose-600'  },
+  { icon: BarChart2,   label: 'Análisis', desc: 'Estadísticas detalladas', href: '/admin/analisis/mascotas', color: 'bg-indigo-100',text: 'text-indigo-600'},
+];
+
+const QuickCard = ({ icon: Icon, label, desc, href, color, text }: {
+  icon: React.ElementType; label: string; desc: string; href: string; color: string; text: string;
+}) => (
+  <Link
+    to={href}
+    className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-3 hover:shadow-md transition-all duration-200 group cursor-pointer"
+  >
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+      <Icon className={`w-5 h-5 ${text}`} strokeWidth={1.5} />
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-semibold text-slate-900">{label}</p>
+      <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+    </div>
+    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+  </Link>
+);
 
 /* ── Página ──────────────────────────────────────────────────────────── */
 const AdminPage = () => {
@@ -223,7 +263,7 @@ const AdminPage = () => {
   const mascotaEstadoData  = (reporteStats?.por_estado  ?? []).map(e => ({ name: ESTADO_REPORTE_LABEL[e.estado]  ?? e.estado,  value: e.count }));
   const mascotaTamanioData = (reporteStats?.por_tamanio ?? []).map(t => ({ name: t.tamanio.charAt(0) + t.tamanio.slice(1).toLowerCase(), value: t.count }));
   const especieData        = (reporteStats?.por_especie ?? []).map(e => ({
-    name: `${ESPECIE_EMOJI[e.especie] ?? '🐾'} ${e.especie.charAt(0) + e.especie.slice(1).toLowerCase()}`,
+    name: e.especie.charAt(0) + e.especie.slice(1).toLowerCase(),
     value: e.count,
   }));
 
@@ -232,7 +272,7 @@ const AdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       {/* Header */}
@@ -274,12 +314,21 @@ const AdminPage = () => {
         ) : (
           <div className="space-y-10">
 
+            {/* ══ ACCESOS RÁPIDOS ═══════════════════════════════════════ */}
+            <section>
+              <SectionHeader icon={Activity} title="Accesos rápidos" />
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {QUICK_LINKS.map((q) => <QuickCard key={q.href} {...q} />)}
+              </div>
+            </section>
+
             {/* ══ USUARIOS ══════════════════════════════════════════════ */}
             <section>
               <SectionHeader
                 icon={Users}
                 title="Usuarios"
                 meta={userStats ? `${userStats.total.toLocaleString('es-CL')} registrados · ${userStats.activos.toLocaleString('es-CL')} activos` : undefined}
+                href="/admin/analisis/usuarios"
               />
 
               {/* KPIs */}
@@ -292,26 +341,26 @@ const AdminPage = () => {
 
               {/* Gráficos fila 1 */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <ChartCard title="Tipo de usuario" icon={UserCircle} delay={0.05}>
+                <ChartCard title="Tipo de usuario" icon={UserCircle} delay={0.05} to="/admin/analisis/usuarios">
                   <DonutChart data={tipoUsuarioData} colors={COLORS.tipoUsuario} />
                 </ChartCard>
 
-                <ChartCard title="Tipo de institución" icon={Building2} delay={0.1}>
+                <ChartCard title="Tipo de institución" icon={Building2} delay={0.1} to="/admin/analisis/usuarios">
                   <DonutChart data={tipoInstData} colors={COLORS.tipoInstitucion} />
                 </ChartCard>
 
-                <ChartCard title="Por rol" icon={Tag} delay={0.15}>
+                <ChartCard title="Por rol" icon={Tag} delay={0.15} to="/admin/analisis/usuarios">
                   <HBarChart data={rolData} color={COLORS.rol} labelWidth={90} />
                 </ChartCard>
               </div>
 
               {/* Gráficos fila 2 */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <ChartCard title="Por región" icon={MapPin} delay={0.2}>
+                <ChartCard title="Por región" icon={MapPin} delay={0.2} to="/admin/analisis/usuarios">
                   <HBarChart data={regionData} color={COLORS.region} labelWidth={130} />
                 </ChartCard>
 
-                <ChartCard title="Top 10 comunas" icon={TrendingUp} delay={0.25}>
+                <ChartCard title="Top 10 comunas" icon={TrendingUp} delay={0.25} to="/admin/analisis/usuarios">
                   <HBarChart data={comunasData} color={COLORS.comuna} labelWidth={110} />
                 </ChartCard>
               </div>
@@ -323,14 +372,15 @@ const AdminPage = () => {
                 icon={TicketCheck}
                 title="Soporte"
                 meta={ticketStats ? `${ticketStats.total.toLocaleString('es-CL')} tickets en total` : undefined}
+                href="/admin/analisis/tickets"
               />
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <ChartCard title="Tickets por estado" icon={Activity} delay={0.3}>
+                <ChartCard title="Tickets por estado" icon={Activity} delay={0.3} to="/admin/analisis/tickets">
                   <DonutChart data={ticketEstadoData} colors={COLORS.ticketEstado} />
                 </ChartCard>
 
-                <ChartCard title="Tickets por categoría" icon={Tag} delay={0.35}>
+                <ChartCard title="Tickets por categoría" icon={Tag} delay={0.35} to="/admin/analisis/tickets">
                   <HBarChart data={ticketCatData} color={COLORS.ticketCategoria[0]} labelWidth={110} />
                 </ChartCard>
               </div>
@@ -342,6 +392,7 @@ const AdminPage = () => {
                 icon={PawPrint}
                 title="Reportes de mascotas"
                 meta={reporteStats ? `${reporteStats.total.toLocaleString('es-CL')} reportes en total` : undefined}
+                href="/admin/analisis/mascotas"
               />
 
               {/* KPIs */}
@@ -361,21 +412,21 @@ const AdminPage = () => {
 
               {/* Gráficos fila 1: 3 donuts */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <ChartCard title="Tipo de reporte" icon={Search} delay={0.4}>
+                <ChartCard title="Tipo de reporte" icon={Search} delay={0.4} to="/admin/analisis/mascotas">
                   <DonutChart data={mascotaTipoData} colors={COLORS.mascotaTipo} />
                 </ChartCard>
 
-                <ChartCard title="Estado del reporte" icon={Activity} delay={0.45}>
+                <ChartCard title="Estado del reporte" icon={Activity} delay={0.45} to="/admin/analisis/mascotas">
                   <DonutChart data={mascotaEstadoData} colors={COLORS.mascotaEstado} />
                 </ChartCard>
 
-                <ChartCard title="Tamaño de mascota" icon={TrendingUp} delay={0.5}>
+                <ChartCard title="Tamaño de mascota" icon={TrendingUp} delay={0.5} to="/admin/analisis/mascotas">
                   <DonutChart data={mascotaTamanioData} colors={COLORS.mascotaTamanio} />
                 </ChartCard>
               </div>
 
               {/* Gráfico fila 2: especie */}
-              <ChartCard title="Por especie" icon={PawPrint} delay={0.55}>
+              <ChartCard title="Por especie" icon={PawPrint} delay={0.55} to="/admin/analisis/mascotas">
                 <HBarChart data={especieData} color={COLORS.especie} labelWidth={90} />
               </ChartCard>
             </section>

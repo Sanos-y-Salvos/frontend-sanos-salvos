@@ -81,9 +81,23 @@ const Footer = () => {
         </div>
 
         {/* Bottom */}
-        <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p className="text-xs">© 2026 Sanos y Salvos. Todos los derechos reservados.</p>
-          <p className="text-xs">Desarrollado por Beneventi · Moreno · Ruiz — DUOC UC</p>
+          <div className="flex items-center gap-4 text-xs">
+            {[
+              { label: 'Términos y Condiciones', path: '/terminos' },
+              { label: 'Privacidad', path: '/privacidad' },
+              { label: 'Normas de la Comunidad', path: '/politica' },
+            ].map(({ label, path }) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className="hover:text-brand-400 transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

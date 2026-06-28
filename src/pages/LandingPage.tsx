@@ -21,7 +21,7 @@ const LandingPage = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       {/* ── Hero ── */}

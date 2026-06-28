@@ -33,7 +33,7 @@ export const MensajeriaProvider = ({ children }: { children: React.ReactNode }) 
     }
 
     const token = storage.getAccessToken();
-    const s = io(MENSAJERIA_URL, {
+    const s = io(MENSAJERIA_URL || undefined, {
       auth: { token },
       transports: ['websocket'],
     });

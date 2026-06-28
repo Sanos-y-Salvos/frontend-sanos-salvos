@@ -115,7 +115,7 @@ const NuevoReportePage = () => {
   const formValido = nombreMascota.trim() && especie && color.trim() && tamanio && tipo && posicion;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col public-glass">
       <Navbar />
 
       <div className="bg-white border-b border-slate-100">

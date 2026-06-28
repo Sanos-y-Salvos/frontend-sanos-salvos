@@ -2,7 +2,20 @@ import { parseRut } from './rutFormatter';
 
 export const esEmailValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 export const esTelefonoValido = (v: string) => /^\d{8}$/.test(v);
-export const esNombreValido = (v: string) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]{3,}$/.test(v.trim());
+export const esNombreValido = (v: string) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]{3,}$/.test(v.trim());
+export const sanitizeNombre = (v: string) => v.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]/g, '');
+
+export const formatDireccion = (value: string): string => {
+  // Strip symbols — only letters, digits, spaces, period, hyphen, comma and # are valid
+  const clean = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\d\s.,#-]/g, '');
+  // Already has ", #NUMBER" — normalize and keep stable while user keeps typing
+  const already = clean.match(/^(.+?),\s*#?\s*(\d+.*)$/);
+  if (already) return `${already[1].trimEnd()}, #${already[2]}`;
+  // Raw: text ending in a letter + optional space + digits → add ", #"
+  const raw = clean.match(/^(.*[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ])\s*(\d+.*)$/);
+  if (raw) return `${raw[1].trimEnd()}, #${raw[2]}`;
+  return clean;
+};
 export const esRutValido = (formatted: string) => /^[0-9]{7,8}-[0-9kK]$/.test(parseRut(formatted));
 
 export const getPasswordReqs = (v: string) => [

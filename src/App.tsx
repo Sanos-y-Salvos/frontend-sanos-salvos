@@ -32,6 +32,10 @@ import ReporteDetallePage from './pages/reportes/ReporteDetallePage';
 import SalasPage from './pages/mensajes/SalasPage';
 import ChatPage from './pages/mensajes/ChatPage';
 import { MensajeriaProvider } from './context/MensajeriaContext';
+import TerminosPage from './pages/legal/TerminosPage';
+import PrivacidadPage from './pages/legal/PrivacidadPage';
+import PoliticaPage from './pages/legal/PoliticaPage';
+import AdminAyudaPage from './pages/admin/AdminAyudaPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -67,6 +71,9 @@ const AppRoutes = () => {
           <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to={EMPLOYEE_ROLES.includes(user?.rol ?? '') ? '/admin' : '/'} />} />
           <Route path="/registro" element={!isAuthenticated ? <RegisterPage /> : <Navigate to="/" />} />
           <Route path="/reset-password" element={!isAuthenticated ? <ResetPasswordPage /> : <Navigate to="/" />} />
+          <Route path="/terminos" element={<TerminosPage />} />
+          <Route path="/privacidad" element={<PrivacidadPage />} />
+          <Route path="/politica" element={<PoliticaPage />} />
           <Route path="/soporte" element={<SoportePage />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/tickets/nuevo" element={<NuevoTicketPage />} />
@@ -85,6 +92,7 @@ const AppRoutes = () => {
           <Route path="/admin/analisis/usuarios" element={<AdminRoute><AnalisisUsuariosPage /></AdminRoute>} />
           <Route path="/admin/analisis/mascotas" element={<AdminRoute><AnalisisMascotasPage /></AdminRoute>} />
           <Route path="/admin/analisis/tickets" element={<AdminRoute><AnalisisTicketsPage /></AdminRoute>} />
+          <Route path="/admin/ayuda" element={<AdminRoute><AdminAyudaPage /></AdminRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         {!ocultarChatbot && <ChatbotWidget />}

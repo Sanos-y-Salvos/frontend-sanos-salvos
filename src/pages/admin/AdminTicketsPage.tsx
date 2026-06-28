@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardList, ChevronRight, ChevronLeft, MessageSquare, Filter, Loader2,
   Wrench, AlertTriangle, HelpCircle, ShieldCheck, User, Send,
-  UserCheck, RefreshCw, TicketCheck, Mail,
+  UserCheck, RefreshCw, TicketCheck, Mail, Search, Clock,
 } from 'lucide-react';
 import { ticketService } from '../../services/ticketService';
-import type { Ticket } from '../../types';
+import { useSoporteSocket } from '../../hooks/useSoporteSocket';
+import type { Ticket, Comentario } from '../../types';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BotonVolver from '../../components/layout/BotonVolver';
@@ -26,6 +27,15 @@ const categoriaLabel: Record<string, string> = {
   problema_tecnico: 'Problema técnico', reporte_abuso: 'Reporte de abuso', otro: 'Otro',
 };
 const FILTROS = ['', 'abierto', 'en_proceso', 'resuelto', 'cerrado'];
+
+const tiempoTranscurrido = (fecha: string) => {
+  const dias = Math.floor((Date.now() - new Date(fecha).getTime()) / 86_400_000);
+  if (dias === 0) return 'Hoy';
+  if (dias === 1) return 'Ayer';
+  if (dias < 7)  return `Hace ${dias} días`;
+  if (dias < 30) return `Hace ${Math.floor(dias / 7)} sem.`;
+  return `Hace ${Math.floor(dias / 30)} mes${Math.floor(dias / 30) > 1 ? 'es' : ''}`;
+};
 
 const CatIcon = ({ cat }: { cat: string }) => {
   const cls = 'w-3.5 h-3.5';
@@ -87,6 +97,19 @@ const DetalleTicket = ({
   const [enviando, setEnviando]     = useState(false);
   const [nuevoEstado, setNuevoEstado] = useState(ticket.estado);
   const [error, setError]           = useState('');
+  const [comentariosRT, setComentariosRT] = useState<Comentario[]>([]);
+
+  useEffect(() => { setComentariosRT([]); }, [ticket.id]);
+
+  useSoporteSocket(ticket.id, (nuevo) => {
+    setComentariosRT((prev) =>
+      prev.some((c) => c.id === nuevo.id) ? prev : [...prev, nuevo],
+    );
+  });
+
+  const todosComentarios = [...ticket.comentarios, ...comentariosRT].filter(
+    (c, i, arr) => arr.findIndex((x) => x.id === c.id) === i,
+  );
 
   const handleAsignar = async () => {
     setEnviando(true); setError('');
@@ -118,8 +141,6 @@ const DetalleTicket = ({
     setEnviando(true); setError('');
     try {
       await ticketService.responderTicket(ticket.id, respuesta);
-      const actualizado = await ticketService.verTicket(ticket.id);
-      onActualizar(actualizado);
       setRespuesta('');
     } catch {
       setError('Error al responder el ticket');
@@ -129,7 +150,7 @@ const DetalleTicket = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       {/* Header */}
@@ -233,14 +254,14 @@ const DetalleTicket = ({
               <h2 className="font-semibold text-slate-800 text-sm">Conversación</h2>
             </div>
 
-            {ticket.comentarios.length === 0 ? (
+            {todosComentarios.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
                 <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-40" strokeWidth={1} />
                 <p className="text-sm">No hay comentarios aún</p>
               </div>
             ) : (
               <div className="space-y-3 mb-4">
-                {ticket.comentarios.map((c) => {
+                {todosComentarios.map((c) => {
                   const esAdmin = c.tipo_autor === 'administrador';
                   return (
                     <div
@@ -322,6 +343,7 @@ const AdminTicketsPage = () => {
   const [filtroEstado, setFiltroEstado]   = useState('');
   const [seleccionado, setSeleccionado]   = useState<Ticket | null>(null);
   const [page, setPage]                   = useState(1);
+  const [busqueda, setBusqueda]           = useState('');
 
   const cargarTickets = async () => {
     setLoading(true);
@@ -354,7 +376,7 @@ const AdminTicketsPage = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
       {/* Header */}
@@ -367,31 +389,45 @@ const AdminTicketsPage = () => {
           </div>
           {!loading && (
             <p className="text-slate-500 text-sm mt-0.5 ml-7">
-              {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} encontrado{tickets.length !== 1 ? 's' : ''}
-              {tickets.length > PAGE_SIZE && ` · página ${page} de ${Math.ceil(tickets.length / PAGE_SIZE)}`}
+              {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} total
+              {busqueda && ` · filtrando por "${busqueda}"`}
             </p>
           )}
         </div>
 
         {/* Filtros */}
-        <div className="px-6 lg:px-8 pb-4 flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Filter className="w-4 h-4" />
-            <span className="text-xs font-medium">Estado:</span>
+        <div className="px-6 lg:px-8 pb-4 space-y-3">
+          {/* Búsqueda */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por asunto o descripción..."
+              value={busqueda}
+              onChange={e => { setBusqueda(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-xl bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+            />
           </div>
-          {FILTROS.map((estado) => (
-            <button
-              key={estado}
-              onClick={() => setFiltroEstado(estado)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                filtroEstado === estado
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {estado === '' ? 'Todos' : estadoLabel[estado]}
-            </button>
-          ))}
+          {/* Estado */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Filter className="w-4 h-4" />
+              <span className="text-xs font-medium">Filtros rápidos:</span>
+            </div>
+            {FILTROS.map((estado) => (
+              <button
+                key={estado}
+                onClick={() => { setFiltroEstado(estado); setPage(1); }}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  filtroEstado === estado
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {estado === '' ? 'Todos' : estadoLabel[estado]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -412,21 +448,33 @@ const AdminTicketsPage = () => {
               <Loader2 className="w-7 h-7 animate-spin text-brand-500" />
               <p className="text-sm">Cargando tickets...</p>
             </div>
-          ) : tickets.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 text-center"
-            >
-              <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <TicketCheck className="w-7 h-7 text-slate-300" strokeWidth={1.5} />
-              </div>
-              <h2 className="font-display font-bold text-slate-800 mb-1">No hay tickets</h2>
-              <p className="text-sm text-slate-400">No se encontraron tickets con ese filtro.</p>
-            </motion.div>
           ) : (() => {
-            const totalPages = Math.ceil(tickets.length / PAGE_SIZE);
-            const paginados  = tickets.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+            const q = busqueda.trim().toLowerCase();
+            const ticketsFiltrados = q
+              ? tickets.filter(t =>
+                  t.asunto.toLowerCase().includes(q) ||
+                  t.descripcion?.toLowerCase().includes(q)
+                )
+              : tickets;
+
+            if (ticketsFiltrados.length === 0) return (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm p-16 text-center"
+              >
+                <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <TicketCheck className="w-7 h-7 text-slate-300" strokeWidth={1.5} />
+                </div>
+                <h2 className="font-display font-bold text-slate-800 mb-1">No hay tickets</h2>
+                <p className="text-sm text-slate-400">
+                  {q ? `Sin resultados para "${busqueda}"` : 'No se encontraron tickets con ese filtro.'}
+                </p>
+              </motion.div>
+            );
+
+            const totalPages = Math.ceil(ticketsFiltrados.length / PAGE_SIZE);
+            const paginados  = ticketsFiltrados.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
             return (
             <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -451,7 +499,10 @@ const AdminTicketsPage = () => {
 
                   <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-2">
                     <CatIcon cat={ticket.categoria} />
-                    {categoriaLabel[ticket.categoria]} · {new Date(ticket.created_at).toLocaleDateString('es-CL')}
+                    {categoriaLabel[ticket.categoria]}
+                    <span className="text-slate-300">·</span>
+                    <Clock className="w-3 h-3" />
+                    {tiempoTranscurrido(ticket.created_at)}
                   </p>
 
                   <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">{ticket.descripcion}</p>

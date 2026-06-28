@@ -1,10 +1,10 @@
-import { useState } from 'react';
+  import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useAdminMode } from '../../context/AdminModeContext';
 import {
   PawPrint, LayoutDashboard, TicketCheck, Users,
-  Eye, LogOut, User, BarChart2, ChevronDown, ShieldAlert,
+  Eye, LogOut, User, BarChart2, ChevronDown, ShieldAlert, X, Menu, Bot,
 } from 'lucide-react';
 
 const ROL_COLOR: Record<string, string> = {
@@ -21,6 +21,7 @@ const NAV_LINKS = [
   { label: 'Tickets',   path: '/admin/tickets',   icon: TicketCheck },
   { label: 'Usuarios',  path: '/admin/usuarios',  icon: Users },
   { label: 'Mensajes',  path: '/admin/mensajes',  icon: ShieldAlert },
+  { label: 'Asistente', path: '/admin/ayuda',     icon: Bot },
 ];
 
 const ANALISIS_LINKS = [
@@ -37,6 +38,7 @@ const AdminSidebar = () => {
 
   const inAnalisis = location.pathname.startsWith('/admin/analisis');
   const [analisisOpen, setAnalisisOpen] = useState(inAnalisis);
+  const [mobileOpen, setMobileOpen]     = useState(false);
 
   const isActive = (path: string) =>
     path === '/admin' ? location.pathname === '/admin' : location.pathname === path;
@@ -50,18 +52,43 @@ const AdminSidebar = () => {
     navigate('/login');
   };
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
+
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 h-screen w-60 bg-slate-900 flex-col z-50 select-none">
+    <>
+    {/* Mobile overlay */}
+    {mobileOpen && (
+      <div
+        className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        onClick={() => setMobileOpen(false)}
+      />
+    )}
+
+    <aside className={`fixed left-0 top-0 h-screen w-60 bg-gradient-to-b from-slate-900/85 via-slate-900/75 to-teal-950/85 backdrop-blur-2xl border-r border-white/10 flex-col z-50 select-none shadow-[8px_0_40px_-12px_rgba(13,148,136,0.45)] transition-transform duration-300
+      ${mobileOpen ? 'flex translate-x-0' : '-translate-x-full md:translate-x-0 hidden md:flex'}
+    `}>
 
       {/* Logo */}
-      <div className="px-5 pt-6 pb-5 border-b border-white/10">
-        <button onClick={() => navigate('/admin')} className="flex items-center gap-2.5">
+      <div className="px-5 pt-6 pb-5 border-b border-white/10 flex items-center justify-between">
+        <button onClick={() => handleNavigate('/admin')} className="flex items-center gap-2.5">
           <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
-          <span className="font-display font-bold text-white text-sm tracking-tight">
-            Sanos y Salvos
-          </span>
+          <div>
+            <span className="font-display font-bold text-white text-sm tracking-tight block">
+              Sanos y Salvos
+            </span>
+            <p className="text-[11px] text-slate-500">Panel interno</p>
+          </div>
         </button>
-        <p className="text-[11px] text-slate-500 mt-1 ml-[29px]">Panel interno</p>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label="Cerrar menú"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -71,28 +98,34 @@ const AdminSidebar = () => {
         {NAV_LINKS.map(({ label, path, icon: Icon }) => (
           <button
             key={path}
-            onClick={() => navigate(path)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            onClick={() => handleNavigate(path)}
+            className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
               isActive(path)
                 ? 'bg-white/10 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
+            {isActive(path) && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-teal-400" />
+            )}
             <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
             {label}
           </button>
         ))}
 
-        {/* Análisis (colapsable) */}
+        {/* Analisis (colapsable) */}
         <div className="pt-1">
           <button
             onClick={() => setAnalisisOpen(v => !v)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
               inAnalisis
                 ? 'bg-white/10 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
+            {inAnalisis && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-teal-400" />
+            )}
             <BarChart2 className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
             <span className="flex-1 text-left">Análisis</span>
             <ChevronDown
@@ -105,8 +138,8 @@ const AdminSidebar = () => {
               {ANALISIS_LINKS.map(({ label, path }) => (
                 <button
                   key={path}
-                  onClick={() => navigate(path)}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  onClick={() => handleNavigate(path)}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
                     location.pathname === path
                       ? 'bg-white/10 text-white'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -157,6 +190,48 @@ const AdminSidebar = () => {
         </button>
       </div>
     </aside>
+
+    {/* Mobile hamburger trigger (shows above bottom tab bar) */}
+    {!mobileOpen && (
+      <button
+        className="md:hidden fixed bottom-[4.5rem] right-4 z-50 w-10 h-10 bg-slate-900/90 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/10"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <Menu className="w-4.5 h-4.5 text-slate-300" />
+      </button>
+    )}
+
+    {/* Mobile bottom tab bar */}
+    <nav
+      className="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-xl border-t border-white/10 flex z-40"
+      aria-label="Navegación móvil"
+    >
+      {NAV_LINKS.map(({ label, path, icon: Icon }) => (
+        <button
+          key={path}
+          onClick={() => handleNavigate(path)}
+          aria-label={label}
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors cursor-pointer ${
+            isActive(path) ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <Icon className="w-5 h-5" strokeWidth={1.5} />
+          <span className="text-[9px] font-medium">{label}</span>
+        </button>
+      ))}
+      <button
+        onClick={() => handleNavigate('/admin/analisis/mascotas')}
+        aria-label="Análisis"
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors cursor-pointer ${
+          inAnalisis ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'
+        }`}
+      >
+        <BarChart2 className="w-5 h-5" strokeWidth={1.5} />
+        <span className="text-[9px] font-medium">Análisis</span>
+      </button>
+    </nav>
+    </>
   );
 };
 
