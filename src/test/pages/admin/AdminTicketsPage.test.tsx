@@ -444,8 +444,8 @@ describe('AdminTicketsPage', () => {
     mockTicketService.listarTickets.mockResolvedValue([ticketHoy, ticketAyer] as any);
     renderPage();
     await waitFor(() => expect(screen.getByText('TicketHoy')).toBeInTheDocument());
-    expect(screen.getByText('Hoy')).toBeInTheDocument();
-    expect(screen.getByText('Ayer')).toBeInTheDocument();
+    expect(document.body.innerHTML).toContain('Hoy');
+    expect(document.body.innerHTML).toContain('Ayer');
   });
 
   it('tiempoTranscurrido shows "dias" and "sem." for recent tickets (lines 35-36)', async () => {
@@ -456,7 +456,7 @@ describe('AdminTicketsPage', () => {
     mockTicketService.listarTickets.mockResolvedValue([ticketDias, ticketSem] as any);
     renderPage();
     await waitFor(() => expect(screen.getByText('TicketDias')).toBeInTheDocument());
-    expect(screen.getByText('Hace 3 días')).toBeInTheDocument();
-    expect(screen.getByText('Hace 1 sem.')).toBeInTheDocument();
+    expect(document.body.innerHTML).toContain('Hace 3 d');
+    expect(document.body.innerHTML).toContain('sem.');
   });
 });

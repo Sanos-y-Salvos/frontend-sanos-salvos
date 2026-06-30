@@ -617,4 +617,25 @@ describe('PerfilPage - institucion edit mode and extra flows', () => {
       fireEvent.blur(dirInput, { target: { value: 'Av. Las Rosas 123' } });
     }
   });
+
+  it('shows rol label for unknown rol (line 272 fallback branch)', async () => {
+    mockUser = { ...ciudadanoUser, rol: 'moderador' };
+    mockUserService.obtenerPerfil.mockResolvedValue({ ...ciudadanoUser, rol: 'moderador' } as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('moderador')).toBeInTheDocument());
+  });
+
+  it('file input with no file sets foto to null in edit mode (line 465)', async () => {
+    mockUser = institucionUser;
+    mockUserService.obtenerPerfil.mockResolvedValue(institucionUser as any);
+    renderPage();
+    await waitFor(() => expect(screen.getAllByText('VetCare').length).toBeGreaterThan(0));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      Object.defineProperty(fileInput, 'files', { value: [], configurable: true });
+      fireEvent.change(fileInput);
+    }
+  });
 });

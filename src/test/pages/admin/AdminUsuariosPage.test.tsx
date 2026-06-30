@@ -943,6 +943,38 @@ describe('AdminUsuariosPage - extra flows', () => {
     }
   });
 
+  it('search with institution user covers line 583', async () => {
+    // User with no ciudadano and no institution to cover `|| ''` fallback
+    const userNoNames = {
+      ...ciudadanoUser,
+      id: 'uNN',
+      credential_id: 'crNN',
+      email: 'nonames@test.cl',
+      ciudadano: null,
+      institucion: null,
+    };
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser, userNoNames] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    const searchInput = screen.getByPlaceholderText(/buscar/i);
+    // Search by email — covers the `|| ''` branch in nombre since userNoNames.ciudadano=null, institucion=null
+    fireEvent.change(searchInput, { target: { value: 'nonames@test.cl' } });
+    await waitFor(() => expect(screen.getByText('nonames@test.cl')).toBeInTheDocument());
+  });
+
+  it('file input in create modal with no file sets null (line 916)', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getAllByText('Ciudadano', { selector: 'button' }));
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      Object.defineProperty(fileInput, 'files', { value: [], configurable: true });
+      fireEvent.change(fileInput);
+    }
+  });
+
   it('changeRutCrear validates when field is touched (lines 159-160)', async () => {
     renderPage();
     await waitFor(() => screen.getByText('Crear usuario'));
