@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,10 +13,12 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { userService } from '../../services/userService';
 import { ticketService } from '../../services/ticketService';
-import { getEstadisticasReportes, type EstadisticasReportes } from '../../services/reporteService';
+import { getEstadisticasReportes, listarReportes, type EstadisticasReportes } from '../../services/reporteService';
 import { regionService } from '../../services/regionService';
+import type { User, Reporte, Ticket } from '../../types';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
+import DetailPanel from '../../components/admin/DetailPanel';
 
 /* ── Paletas ─────────────────────────────────────────────────────────── */
 const ROL_COLOR: Record<string, string> = {
@@ -54,17 +56,21 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 /* ── KPI card ────────────────────────────────────────────────────────── */
-const KpiCard = ({ label, value, icon: Icon, color }: {
-  label: string; value: number; icon: React.ElementType; color: string;
+const KpiCard = ({ label, value, icon: Icon, color, onClick }: {
+  label: string; value: number | string; icon: React.ElementType; color: string; onClick?: () => void;
 }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
+  <div
+    onClick={onClick}
+    className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 transition-all duration-150 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-slate-200 active:scale-[0.99]' : ''}`}
+  >
     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
       <Icon className="w-5 h-5" strokeWidth={1.5} />
     </div>
-    <div>
-      <p className="text-2xl font-display font-bold text-slate-900 leading-none">{value.toLocaleString('es-CL')}</p>
+    <div className="flex-1 min-w-0">
+      <p className="text-2xl font-display font-bold text-slate-900 leading-none">{typeof value === 'number' ? value.toLocaleString('es-CL') : value}</p>
       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
     </div>
+    {onClick && <span className="text-[10px] text-slate-300 flex-shrink-0">Ver →</span>}
   </div>
 );
 
@@ -173,6 +179,48 @@ const SectionHeader = ({ icon: Icon, title, meta, href }: {
   </div>
 );
 
+/* ── Helpers tabla panel ────────────────────────────────────────────── */
+const ROL_BADGE_DASH: Record<string, string> = {
+  ciudadano: 'bg-blue-100 text-blue-700', veterinaria: 'bg-emerald-100 text-emerald-700',
+  municipalidad: 'bg-purple-100 text-purple-700', moderador: 'bg-amber-100 text-amber-700',
+  administrador: 'bg-orange-100 text-orange-700', superadmin: 'bg-rose-100 text-rose-700',
+};
+const ROL_LBL: Record<string, string> = {
+  ciudadano: 'Ciudadano', veterinaria: 'Veterinaria', municipalidad: 'Municipalidad',
+  moderador: 'Moderador', administrador: 'Administrador', superadmin: 'Super Admin',
+};
+const TIPO_BADGE_DASH: Record<string, string> = {
+  PERDIDA: 'bg-rose-100 text-rose-700', ENCONTRADA: 'bg-emerald-100 text-emerald-700',
+};
+const ESTADO_BADGE_DASH: Record<string, string> = {
+  EN_BUSQUEDA: 'bg-amber-100 text-amber-700', RESUELTO: 'bg-emerald-100 text-emerald-700',
+  ABANDONADO: 'bg-slate-100 text-slate-500', OCULTO: 'bg-slate-50 text-slate-400',
+};
+const ESTADO_LBL_DASH: Record<string, string> = {
+  EN_BUSQUEDA: 'En búsqueda', RESUELTO: 'Resuelto', ABANDONADO: 'Abandonado', OCULTO: 'Oculto',
+};
+const ESTADO_TK_BADGE: Record<string, string> = {
+  abierto: 'bg-indigo-100 text-indigo-700', en_proceso: 'bg-amber-100 text-amber-700',
+  resuelto: 'bg-emerald-100 text-emerald-700', cerrado: 'bg-slate-100 text-slate-500',
+};
+const ESTADO_TK_LBL: Record<string, string> = {
+  abierto: 'Abierto', en_proceso: 'En proceso', resuelto: 'Resuelto', cerrado: 'Cerrado',
+};
+const CAT_LBL: Record<string, string> = {
+  problema_tecnico: 'Prob. técnico', reporte_abuso: 'Abuso', otro: 'Otro',
+};
+const fmtD = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+const getNombreDash = (u: User) =>
+  u.ciudadano ? `${u.ciudadano.primer_nombre} ${u.ciudadano.apellido_paterno}` : u.institucion?.razon_social ?? u.email;
+
+type PanelKind = 'users' | 'reports' | 'tickets';
+interface PanelState {
+  open: boolean; title: string; loading: boolean;
+  kind: PanelKind; items: (User | Reporte | Ticket)[];
+}
+const PANEL_CLOSED: PanelState = { open: false, title: '', loading: false, kind: 'users', items: [] };
+
 /* ── Tipos ───────────────────────────────────────────────────────────── */
 type UserStats   = Awaited<ReturnType<typeof userService.getEstadisticas>>;
 type TicketStats = Awaited<ReturnType<typeof ticketService.getEstadisticas>>;
@@ -222,6 +270,7 @@ const AdminPage = () => {
   const [regionNames,  setRegionNames]  = useState<Record<string, string>>({});
   const [loading,      setLoading]      = useState(true);
   const [lastUpdate,   setLastUpdate]   = useState<Date>(new Date());
+  const [panel,        setPanel]        = useState<PanelState>(PANEL_CLOSED);
 
   const cargar = async () => {
     setLoading(true);
@@ -242,6 +291,31 @@ const AdminPage = () => {
   };
 
   useEffect(() => { cargar(); }, []);
+
+  const openUsersPanel = useCallback(async (title: string, filtros?: { is_active?: boolean; tipo?: string }) => {
+    setPanel({ open: true, title, loading: true, kind: 'users', items: [] });
+    try {
+      let list = await userService.listarUsuarios(filtros?.is_active != null ? { is_active: filtros.is_active } : {});
+      if (filtros?.tipo) list = list.filter(u => u.tipo === filtros.tipo);
+      setPanel(p => ({ ...p, loading: false, items: list }));
+    } catch { setPanel(p => ({ ...p, loading: false })); }
+  }, []);
+
+  const openReportsPanel = useCallback(async (title: string, filtros?: { tipo?: string; estado?: string }) => {
+    setPanel({ open: true, title, loading: true, kind: 'reports', items: [] });
+    try {
+      const res = await listarReportes({ ...(filtros ?? {}), limit: 500 });
+      setPanel(p => ({ ...p, loading: false, items: res.data }));
+    } catch { setPanel(p => ({ ...p, loading: false })); }
+  }, []);
+
+  const openTicketsPanel = useCallback(async (title: string, estado?: string) => {
+    setPanel({ open: true, title, loading: true, kind: 'tickets', items: [] });
+    try {
+      const list = await ticketService.listarTickets(estado);
+      setPanel(p => ({ ...p, loading: false, items: list }));
+    } catch { setPanel(p => ({ ...p, loading: false })); }
+  }, []);
 
   /* ── Datos derivados ── */
   const ciudadanoCount   = userStats?.por_tipo.find(t => t.tipo === 'ciudadano')?.count   ?? 0;
@@ -271,9 +345,79 @@ const AdminPage = () => {
     administrador: 'Administrador', superadmin: 'Super Administrador', moderador: 'Moderador',
   };
 
+  /* ── Panel content ── */
+  const renderPanelContent = () => {
+    if (!panel.items.length)
+      return <p className="text-sm text-slate-400 text-center py-16">No hay registros para mostrar.</p>;
+    return (
+      <div className="px-6 py-4">
+        <p className="text-xs text-slate-400 mb-3">{panel.items.length} registro{panel.items.length !== 1 ? 's' : ''}</p>
+        <div className="space-y-2">
+          {panel.kind === 'users' && (panel.items as User[]).map(u => (
+            <div key={u.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{getNombreDash(u)}</p>
+                <p className="text-xs text-slate-400 truncate">{u.email}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROL_BADGE_DASH[u.rol] ?? 'bg-slate-100 text-slate-600'}`}>
+                  {ROL_LBL[u.rol] ?? u.rol}
+                </span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${u.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {u.is_active ? 'Activo' : 'Inactivo'}
+                </span>
+                <span className="text-[10px] text-slate-400 hidden sm:block">{fmtD(u.created_at)}</span>
+              </div>
+            </div>
+          ))}
+          {panel.kind === 'reports' && (panel.items as Reporte[]).map(r => (
+            <div key={r.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{r.nombreMascota}</p>
+                <p className="text-xs text-slate-400 truncate">{r.especie} · {r.color}{r.direccionReferencia ? ` · ${r.direccionReferencia}` : ''}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${TIPO_BADGE_DASH[r.tipo] ?? 'bg-slate-100 text-slate-600'}`}>
+                  {r.tipo === 'PERDIDA' ? 'Perdida' : 'Encontrada'}
+                </span>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_BADGE_DASH[r.estado] ?? 'bg-slate-100 text-slate-500'}`}>
+                  {ESTADO_LBL_DASH[r.estado] ?? r.estado}
+                </span>
+                <span className="text-[10px] text-slate-400 hidden sm:block">{fmtD(r.fechaPublicacion)}</span>
+              </div>
+            </div>
+          ))}
+          {panel.kind === 'tickets' && (panel.items as Ticket[]).map(t => (
+            <div key={t.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800 truncate">{t.asunto || '(sin asunto)'}</p>
+                <p className="text-xs text-slate-400 truncate">{CAT_LBL[t.categoria] ?? t.categoria}{t.email_contacto ? ` · ${t.email_contacto}` : ''}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_TK_BADGE[t.estado] ?? 'bg-slate-100 text-slate-500'}`}>
+                  {ESTADO_TK_LBL[t.estado] ?? t.estado}
+                </span>
+                <span className="text-[10px] text-slate-400 hidden sm:block">{fmtD(t.created_at)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
+
+      <DetailPanel
+        isOpen={panel.open}
+        onClose={() => setPanel(PANEL_CLOSED)}
+        title={panel.title}
+        loading={panel.loading}
+      >
+        {renderPanelContent()}
+      </DetailPanel>
 
       {/* Header */}
       <div className="bg-white border-b border-slate-100">
@@ -333,10 +477,10 @@ const AdminPage = () => {
 
               {/* KPIs */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <KpiCard label="Total registrados" value={userStats?.total ?? 0}      icon={Users}      color="bg-slate-100 text-slate-600" />
-                <KpiCard label="Cuentas activas"   value={userStats?.activos ?? 0}    icon={Activity}   color="bg-emerald-50 text-emerald-600" />
-                <KpiCard label="Ciudadanos"         value={ciudadanoCount}              icon={UserCircle} color="bg-blue-50 text-blue-600" />
-                <KpiCard label="Instituciones"      value={institucionCount}            icon={Building2}  color="bg-purple-50 text-purple-600" />
+                <KpiCard label="Total registrados" value={userStats?.total ?? 0}      icon={Users}      color="bg-slate-100 text-slate-600"    onClick={() => openUsersPanel('Todos los usuarios')} />
+                <KpiCard label="Cuentas activas"   value={userStats?.activos ?? 0}    icon={Activity}   color="bg-emerald-50 text-emerald-600" onClick={() => openUsersPanel('Usuarios activos', { is_active: true })} />
+                <KpiCard label="Ciudadanos"         value={ciudadanoCount}              icon={UserCircle} color="bg-blue-50 text-blue-600"       onClick={() => openUsersPanel('Ciudadanos', { tipo: 'ciudadano' })} />
+                <KpiCard label="Instituciones"      value={institucionCount}            icon={Building2}  color="bg-purple-50 text-purple-600"   onClick={() => openUsersPanel('Instituciones', { tipo: 'institucion' })} />
               </div>
 
               {/* Gráficos fila 1 */}
@@ -398,16 +542,20 @@ const AdminPage = () => {
               {/* KPIs */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                 <KpiCard label="Reportes totales" value={reporteStats?.total ?? 0}
-                  icon={PawPrint} color="bg-slate-100 text-slate-600" />
+                  icon={PawPrint} color="bg-slate-100 text-slate-600"
+                  onClick={() => openReportsPanel('Todos los reportes')} />
                 <KpiCard label="Perdidas"
                   value={reporteStats?.por_tipo.find(t => t.tipo === 'PERDIDA')?.count ?? 0}
-                  icon={Search} color="bg-rose-50 text-rose-600" />
+                  icon={Search} color="bg-rose-50 text-rose-600"
+                  onClick={() => openReportsPanel('Mascotas perdidas', { tipo: 'PERDIDA' })} />
                 <KpiCard label="Encontradas"
                   value={reporteStats?.por_tipo.find(t => t.tipo === 'ENCONTRADA')?.count ?? 0}
-                  icon={PawPrint} color="bg-emerald-50 text-emerald-600" />
+                  icon={PawPrint} color="bg-emerald-50 text-emerald-600"
+                  onClick={() => openReportsPanel('Mascotas encontradas', { tipo: 'ENCONTRADA' })} />
                 <KpiCard label="Resueltos"
                   value={reporteStats?.por_estado.find(e => e.estado === 'RESUELTO')?.count ?? 0}
-                  icon={CheckCircle2} color="bg-brand-50 text-brand-600" />
+                  icon={CheckCircle2} color="bg-brand-50 text-brand-600"
+                  onClick={() => openReportsPanel('Casos resueltos', { estado: 'RESUELTO' })} />
               </div>
 
               {/* Gráficos fila 1: 3 donuts */}

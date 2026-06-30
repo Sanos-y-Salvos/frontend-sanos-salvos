@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useAdminMode } from '../../context/AdminModeContext';
 import {
   PawPrint, LayoutDashboard, TicketCheck, Users,
-  Eye, LogOut, User, BarChart2, ChevronDown, ShieldAlert, X, Menu, Bot,
+  Eye, LogOut, User, BarChart2, ChevronDown, ShieldAlert, X, Menu, Bot, FileText,
 } from 'lucide-react';
 
 const ROL_COLOR: Record<string, string> = {
@@ -20,6 +20,7 @@ const NAV_LINKS = [
   { label: 'Dashboard', path: '/admin',           icon: LayoutDashboard },
   { label: 'Tickets',   path: '/admin/tickets',   icon: TicketCheck },
   { label: 'Usuarios',  path: '/admin/usuarios',  icon: Users },
+  { label: 'Reportes',  path: '/admin/reportes',  icon: FileText },
   { label: 'Mensajes',  path: '/admin/mensajes',  icon: ShieldAlert },
   { label: 'Asistente', path: '/admin/ayuda',     icon: Bot },
 ];

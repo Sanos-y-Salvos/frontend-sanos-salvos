@@ -112,6 +112,11 @@ describe('response interceptor — refresh token flow', () => {
       new Promise(r => { resolveRefresh = r; }) as any,
     );
 
+    // Replace the adapter on authApi so retry requests reject synchronously
+    // and never escape as unhandled rejections after the test completes.
+    const savedAdapter = authApi.defaults.adapter;
+    authApi.defaults.adapter = () => Promise.reject({ isAxiosError: true, message: 'mocked network', response: null, config: {} });
+
     const interceptor = (authApi.interceptors.response as any).handlers[0];
     const cfg1 = { _retry: false, headers: {} as any };
     const cfg2 = { _retry: false, headers: {} as any };
@@ -124,9 +129,10 @@ describe('response interceptor — refresh token flow', () => {
     // Resolve the refresh token response
     resolveRefresh({ data: { accessToken: 'newTok', refreshToken: 'newRefresh' } });
 
-    try { await p1; } catch { /* network error from retry is expected */ }
-    try { await p2; } catch { /* network error from retry is expected */ }
+    try { await p1; } catch { /* retry is expected to fail */ }
+    try { await p2; } catch { /* retry is expected to fail */ }
 
+    authApi.defaults.adapter = savedAdapter;
     expect(mockStorage.setTokens).toHaveBeenCalledWith('newTok', 'newRefresh');
   });
 

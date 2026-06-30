@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ClipboardList, Clock, CheckCircle, AlertCircle, Loader2, X, SlidersHorizontal } from 'lucide-react';
 import {
@@ -7,9 +7,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 import { ticketService } from '../../../services/ticketService';
+import type { Ticket } from '../../../types';
 import Navbar from '../../../components/layout/Navbar';
 import Footer from '../../../components/layout/Footer';
 import Alert from '../../../components/ui/Alert';
+import DetailPanel from '../../../components/admin/DetailPanel';
 
 type Stats = Awaited<ReturnType<typeof ticketService.getEstadisticas>>;
 
@@ -35,36 +37,61 @@ const fmtMes = (mes: string) => {
 const inRange = (mes: string, desde: string, hasta: string) =>
   (!desde || mes >= desde) && (!hasta || mes <= hasta);
 
-const KpiCard = ({ icon: Icon, value, label, color, sub }: {
-  icon: React.ElementType; value: string | number; label: string; color: string; sub?: string;
+const ESTADO_BADGE_TK: Record<string, string> = {
+  abierto:    'bg-indigo-100 text-indigo-700',
+  en_proceso: 'bg-amber-100 text-amber-700',
+  resuelto:   'bg-emerald-100 text-emerald-700',
+  cerrado:    'bg-slate-100 text-slate-500',
+};
+const fmtFecha = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+const inDateRange = (iso?: string, desde?: string, hasta?: string) => {
+  if (!iso || (!desde && !hasta)) return true;
+  const ym = iso.slice(0, 7);
+  return (!desde || ym >= desde) && (!hasta || ym <= hasta);
+};
+
+const KpiCard = ({ icon: Icon, value, label, color, sub, onClick }: {
+  icon: React.ElementType; value: string | number; label: string; color: string; sub?: string; onClick?: () => void;
 }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
+  <div
+    onClick={onClick}
+    className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 transition-all duration-150 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-slate-200 active:scale-[0.99]' : ''}`}
+  >
     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
       <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
     </div>
-    <div>
+    <div className="flex-1 min-w-0">
       <p className="text-2xl font-display font-bold text-slate-900">{value}</p>
       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
       {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
+    {onClick && <span className="text-[10px] text-slate-300 flex-shrink-0">Ver →</span>}
   </div>
 );
 
-const ChartCard = ({ title, children, className = '' }: {
-  title: string; children: React.ReactNode; className?: string;
+const ChartCard = ({ title, children, className = '', note }: {
+  title: string; children: React.ReactNode; className?: string; note?: string;
 }) => (
   <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
     className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 ${className}`}>
     <p className="text-sm font-semibold text-slate-700 mb-4">{title}</p>
     {children}
+    {note && <p className="text-[10px] text-slate-400 mt-3 pt-2.5 border-t border-slate-50 italic">{note}</p>}
   </motion.div>
 );
 
-const InsightCard = ({ label, value, sub, bar }: {
-  label: string; value: string | number; sub?: string; bar?: number;
+const InsightCard = ({ label, value, sub, bar, onClick }: {
+  label: string; value: string | number; sub?: string; bar?: number; onClick?: () => void;
 }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+  <div
+    onClick={onClick}
+    className={`bg-white rounded-2xl border border-slate-200 shadow-sm p-4 transition-all duration-150 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300 active:scale-[0.99]' : ''}`}
+  >
+    <div className="flex items-center justify-between">
+      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+      {onClick && <span className="text-[10px] text-slate-300">Ver →</span>}
+    </div>
     <p className="text-2xl font-display font-bold text-slate-900 mt-1">{value}</p>
     {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     {bar !== undefined && (
@@ -75,6 +102,37 @@ const InsightCard = ({ label, value, sub, bar }: {
     )}
   </div>
 );
+
+/* ── tabla de tickets en el panel ─────────────────────────────────────── */
+const TicketsTable = ({ tickets }: { tickets: Ticket[] }) => {
+  if (!tickets.length)
+    return <p className="text-sm text-slate-400 text-center py-16">No hay registros para mostrar.</p>;
+  return (
+    <div className="px-6 py-4">
+      <p className="text-xs text-slate-400 mb-3">{tickets.length} registro{tickets.length !== 1 ? 's' : ''}</p>
+      <div className="space-y-2">
+        {tickets.map(t => (
+          <div key={t.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800 truncate">{t.asunto || '(sin asunto)'}</p>
+              <p className="text-xs text-slate-400 truncate">{CAT_LABELS[t.categoria] ?? t.categoria}{t.email_contacto ? ` · ${t.email_contacto}` : ''}</p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_BADGE_TK[t.estado] ?? 'bg-slate-100 text-slate-500'}`}>
+                {ESTADO_LABELS[t.estado] ?? t.estado}
+              </span>
+              <span className="text-[10px] text-slate-400 hidden sm:block">{fmtFecha(t.created_at)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── panel state ──────────────────────────────────────────────────────── */
+interface PanelState { open: boolean; title: string; subtitle: string; tickets: Ticket[]; loading: boolean; }
+const PANEL_CLOSED: PanelState = { open: false, title: '', subtitle: '', tickets: [], loading: false };
 
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
@@ -93,6 +151,7 @@ const AnalisisTicketsPage = () => {
   const [stats,   setStats]   = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [panel,   setPanel]   = useState<PanelState>(PANEL_CLOSED);
 
   /* filtros */
   const [mesDesde,    setMesDesde]    = useState('');
@@ -107,24 +166,64 @@ const AnalisisTicketsPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  /* ── abrir panel ─────────────────────────────────────────────────── */
+  const openPanel = useCallback(async (title: string, overrideEstado?: string | string[]) => {
+    setPanel({ open: true, title, subtitle: '', tickets: [], loading: true });
+    try {
+      const estados = overrideEstado
+        ? (Array.isArray(overrideEstado) ? overrideEstado : [overrideEstado])
+        : (filtroEstado ? [filtroEstado] : []);
+
+      let lista: Ticket[] = [];
+      if (estados.length === 0) {
+        lista = await ticketService.listarTickets();
+      } else if (estados.length === 1) {
+        lista = await ticketService.listarTickets(estados[0]);
+      } else {
+        const listas = await Promise.all(estados.map(e => ticketService.listarTickets(e)));
+        lista = listas.flat();
+      }
+
+      if (filtroCateg) lista = lista.filter(t => t.categoria === filtroCateg);
+      if (mesDesde || mesHasta) lista = lista.filter(t => inDateRange(t.created_at, mesDesde, mesHasta));
+
+      const sub = [
+        mesDesde && `desde ${mesDesde}`, mesHasta && `hasta ${mesHasta}`,
+        filtroCateg && (CAT_LABELS[filtroCateg] ?? filtroCateg),
+      ].filter(Boolean).join(' · ');
+      setPanel(p => ({ ...p, loading: false, tickets: lista, subtitle: sub }));
+    } catch {
+      setPanel(p => ({ ...p, loading: false }));
+    }
+  }, [filtroEstado, filtroCateg, mesDesde, mesHasta]);
+
   const filtrosActivos = !!(mesDesde || mesHasta || filtroCateg || filtroEstado);
+  const filtrosCount   = [mesDesde, mesHasta, filtroCateg, filtroEstado].filter(Boolean).length;
   const resetFiltros = () => { setMesDesde(''); setMesHasta(''); setFiltroCateg(''); setFiltroEstado(''); };
 
-  /* mes total (re-agrega desde categoría si hay filtro de categoría) */
+  /* mes total — re-agrega desde la fuente granular correspondiente al filtro activo */
   const mesData = useMemo(() => {
     if (!stats) return [];
+    if (filtroEstado && !filtroCateg) {
+      const map: Record<string, number> = {};
+      (stats.por_mes_estado ?? [])
+        .filter(d => inRange(d.mes, mesDesde, mesHasta) && d.estado === filtroEstado)
+        .forEach(d => { map[d.mes] = (map[d.mes] ?? 0) + d.count; });
+      return Object.entries(map).sort(([a], [b]) => a.localeCompare(b))
+        .map(([mes, count]) => ({ mes: fmtMes(mes), count }));
+    }
     if (filtroCateg) {
       const map: Record<string, number> = {};
       (stats.por_mes_categoria ?? [])
         .filter(d => inRange(d.mes, mesDesde, mesHasta) && d.categoria === filtroCateg)
         .forEach(d => { map[d.mes] = (map[d.mes] ?? 0) + d.count; });
-      return Object.entries(map).sort(([a],[b]) => a.localeCompare(b))
+      return Object.entries(map).sort(([a], [b]) => a.localeCompare(b))
         .map(([mes, count]) => ({ mes: fmtMes(mes), count }));
     }
     return (stats.por_mes ?? [])
       .filter(d => inRange(d.mes, mesDesde, mesHasta))
       .map(d => ({ mes: fmtMes(d.mes), count: d.count }));
-  }, [stats, mesDesde, mesHasta, filtroCateg]);
+  }, [stats, mesDesde, mesHasta, filtroCateg, filtroEstado]);
 
   /* categorías por mes */
   const catMesData = useMemo(() => {
@@ -166,6 +265,33 @@ const AnalisisTicketsPage = () => {
   const totalPeriodo = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
   const catsActivas  = filtroCateg ? [filtroCateg] : ['problema_tecnico', 'reporte_abuso', 'otro'];
 
+  /* tiempo de resolución — respeta filtro de fechas usando el desglose mensual */
+  const tiempoData = useMemo(() => {
+    if (!stats) return [];
+    if (mesDesde || mesHasta) {
+      const map: Record<string, { suma: number; n: number }> = {};
+      (stats.tiempo_resolucion_mensual ?? [])
+        .filter(t => inRange(t.mes, mesDesde, mesHasta) && (!filtroCateg || t.categoria === filtroCateg))
+        .forEach(t => {
+          if (!map[t.categoria]) map[t.categoria] = { suma: 0, n: 0 };
+          map[t.categoria].suma += t.dias_promedio;
+          map[t.categoria].n   += 1;
+        });
+      return Object.entries(map).map(([cat, { suma, n }]) => ({
+        categoria: CAT_LABELS[cat] ?? cat,
+        dias: +(suma / n).toFixed(1),
+        fill: CAT_COLORS[cat] ?? '#94a3b8',
+      }));
+    }
+    return (stats.tiempo_resolucion ?? [])
+      .filter(t => !filtroCateg || t.categoria === filtroCateg)
+      .map(t => ({
+        categoria: CAT_LABELS[t.categoria] ?? t.categoria,
+        dias: t.dias_promedio,
+        fill: CAT_COLORS[t.categoria] ?? '#94a3b8',
+      }));
+  }, [stats, mesDesde, mesHasta, filtroCateg]);
+
   /* crecimiento mes a mes */
   const crecimientoData = useMemo(() =>
     mesData.map((d, i) => ({
@@ -195,13 +321,15 @@ const AnalisisTicketsPage = () => {
   const finalizados = resueltos + cerrados;
   const tasaResolucion = stats.total > 0 ? Math.round((finalizados / stats.total) * 100) : 0;
 
-  const tiempoData = (stats.tiempo_resolucion ?? [])
-    .filter(t => !filtroCateg || t.categoria === filtroCateg)
-    .map(t => ({
-      categoria: CAT_LABELS[t.categoria] ?? t.categoria,
-      dias: t.dias_promedio,
-      fill: CAT_COLORS[t.categoria] ?? '#94a3b8',
-    }));
+  /* KPI dinámicos según filtroEstado */
+  const sinResolverDisplay = !filtroEstado ? (abiertos + enProceso)
+    : filtroEstado === 'abierto'    ? abiertos
+    : filtroEstado === 'en_proceso' ? enProceso
+    : 0;
+  const finalizadosDisplay = !filtroEstado ? finalizados
+    : filtroEstado === 'resuelto' ? resueltos
+    : filtroEstado === 'cerrado'  ? cerrados
+    : 0;
 
   /* indicadores derivados */
   const backlog           = abiertos + enProceso;
@@ -215,6 +343,17 @@ const AnalisisTicketsPage = () => {
   return (
     <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
+
+      {/* ── Panel detalle ─────────────────────────────────────────────── */}
+      <DetailPanel
+        isOpen={panel.open}
+        onClose={() => setPanel(PANEL_CLOSED)}
+        title={panel.title}
+        subtitle={panel.subtitle || undefined}
+        loading={panel.loading}
+      >
+        <TicketsTable tickets={panel.tickets} />
+      </DetailPanel>
 
       <div className="bg-white border-b border-slate-100">
         <div className="px-6 lg:px-8 py-5">
@@ -260,10 +399,15 @@ const AnalisisTicketsPage = () => {
             </div>
 
             {filtrosActivos && (
-              <button onClick={resetFiltros}
-                className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 border border-rose-200 bg-rose-50 px-3 py-2 rounded-xl transition-all self-end">
-                <X className="w-3.5 h-3.5" /> Limpiar
-              </button>
+              <>
+                <span className="self-center inline-flex items-center gap-1 text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200 px-2.5 py-1.5 rounded-full">
+                  {filtrosCount} filtro{filtrosCount > 1 ? 's' : ''} activo{filtrosCount > 1 ? 's' : ''}
+                </span>
+                <button onClick={resetFiltros}
+                  className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all self-end">
+                  <X className="w-3.5 h-3.5" /> Limpiar filtros
+                </button>
+              </>
             )}
           </div>
           {filtrosActivos && (
@@ -278,11 +422,35 @@ const AnalisisTicketsPage = () => {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={ClipboardList} value={stats.total}            label="Total tickets"          color="bg-indigo-500"
-            sub={filtrosActivos ? `${totalPeriodo} en el período` : undefined} />
-          <KpiCard icon={AlertCircle}   value={abiertos + enProceso}   label="Sin resolver"           color="bg-amber-500" />
-          <KpiCard icon={CheckCircle}   value={finalizados}            label="Resueltos / Cerrados"   color="bg-emerald-500" />
-          <KpiCard icon={Clock}         value={`${tasaResolucion}%`}   label="Tasa de resolución"     color="bg-violet-500" />
+          <KpiCard icon={ClipboardList}
+            value={filtrosActivos ? totalPeriodo : stats.total}
+            label={filtrosActivos ? 'Tickets en período' : 'Total tickets'}
+            color="bg-indigo-500"
+            onClick={() => openPanel('Todos los tickets')} />
+          <KpiCard icon={AlertCircle}
+            value={sinResolverDisplay}
+            label="Sin resolver"
+            color="bg-amber-500"
+            sub={filtroEstado ? `filtro: ${ESTADO_LABELS[filtroEstado]}` : undefined}
+            onClick={() => {
+              const estados = filtroEstado ? [filtroEstado] : ['abierto', 'en_proceso'];
+              openPanel('Sin resolver', estados);
+            }} />
+          <KpiCard icon={CheckCircle}
+            value={finalizadosDisplay}
+            label="Resueltos / Cerrados"
+            color="bg-emerald-500"
+            sub={filtroEstado ? `filtro: ${ESTADO_LABELS[filtroEstado]}` : undefined}
+            onClick={() => {
+              const estados = filtroEstado ? [filtroEstado] : ['resuelto', 'cerrado'];
+              openPanel('Resueltos / Cerrados', estados);
+            }} />
+          <KpiCard icon={Clock}
+            value={`${tasaResolucion}%`}
+            label="Tasa de resolución"
+            color="bg-violet-500"
+            sub={filtrosActivos ? 'estado actual del sistema' : undefined}
+            onClick={() => openPanel('Todos los tickets')} />
         </div>
 
         {/* ── Indicadores derivados ─────────────────────────────────── */}
@@ -294,22 +462,26 @@ const AnalisisTicketsPage = () => {
               value={backlog}
               sub={`${pctBacklog}% del total aún sin cerrar`}
               bar={100 - pctBacklog}
+              onClick={() => openPanel('Backlog activo', ['abierto', 'en_proceso'])}
             />
             <InsightCard
               label="Tasa de cierre"
               value={`${tasaResolucion}%`}
               sub={`${finalizados} tickets finalizados`}
               bar={tasaResolucion}
+              onClick={() => openPanel('Resueltos / Cerrados', ['resuelto', 'cerrado'])}
             />
             <InsightCard
               label="Promedio mensual"
               value={promedioMensual}
               sub="tickets por mes (período filtrado)"
+              onClick={() => openPanel('Todos los tickets')}
             />
             <InsightCard
               label="Tiempo promedio global"
               value={tiempoGlobal ? `${tiempoGlobal} días` : '—'}
               sub="promedio entre categorías resueltas"
+              onClick={() => openPanel('Resueltos / Cerrados', ['resuelto', 'cerrado'])}
             />
           </div>
           {categoriaPrincipal && (
@@ -366,7 +538,8 @@ const AnalisisTicketsPage = () => {
 
         {/* Estado y Categoría */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title={filtroEstado ? `Estado: ${ESTADO_LABELS[filtroEstado]}` : 'Distribución por estado'}>
+          <ChartCard title={filtroEstado ? `Estado: ${ESTADO_LABELS[filtroEstado]}` : 'Distribución por estado'}
+            note="Snapshot del estado actual — no varía con el filtro de fechas">
             {estadoPieData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sin datos</p>
             ) : (
@@ -383,7 +556,8 @@ const AnalisisTicketsPage = () => {
             )}
           </ChartCard>
 
-          <ChartCard title={filtrosActivos ? 'Distribución por categoría (período filtrado)' : 'Distribución por categoría'}>
+          <ChartCard title={filtrosActivos ? 'Distribución por categoría (período filtrado)' : 'Distribución por categoría'}
+            note={filtroEstado ? 'El desglose por categoría no incluye dimensión de estado — el filtro de estado no aplica a esta vista' : undefined}>
             {catPieData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sin datos</p>
             ) : (
@@ -403,7 +577,8 @@ const AnalisisTicketsPage = () => {
 
         {/* Tickets por categoría y mes */}
         {catMesData.length > 0 && (
-          <ChartCard title="Tickets por categoría y mes">
+          <ChartCard title="Tickets por categoría y mes"
+            note={filtroEstado ? 'El desglose por categoría no incluye dimensión de estado — el filtro de estado no aplica a esta vista' : undefined}>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={catMesData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -421,7 +596,8 @@ const AnalisisTicketsPage = () => {
 
         {/* Tiempo de resolución */}
         {tiempoData.length > 0 && (
-          <ChartCard title="Tiempo promedio de resolución por categoría (días hasta cierre)">
+          <ChartCard title="Tiempo promedio de resolución por categoría (días hasta cierre)"
+            note={filtroEstado ? 'Siempre muestra tickets resueltos/cerrados — el filtro de estado no aplica aquí' : undefined}>
             <div className="space-y-4">
               {tiempoData.map(t => {
                 const maxDias = Math.max(...tiempoData.map(d => d.dias), 1);
@@ -455,7 +631,9 @@ const AnalisisTicketsPage = () => {
 
         {/* Resumen estado */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Estado actual del sistema de soporte</p>
+          <p className="text-sm font-semibold text-slate-700 mb-3">Estado actual del sistema de soporte
+            <span className="text-[10px] font-normal text-slate-400 ml-2 italic">· Snapshot global — no varía con filtros</span>
+          </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: 'Abiertos',   count: abiertos,  color: 'bg-indigo-50 border-indigo-100 text-indigo-700' },

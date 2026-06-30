@@ -63,7 +63,9 @@ export const ticketService = {
     por_categoria: { categoria: string; count: number }[];
     por_mes: { mes: string; count: number }[];
     por_mes_categoria: { mes: string; categoria: string; count: number }[];
+    por_mes_estado: { mes: string; estado: string; count: number }[];
     tiempo_resolucion: { categoria: string; dias_promedio: number }[];
+    tiempo_resolucion_mensual: { mes: string; categoria: string; dias_promedio: number }[];
   }> => {
     const { data } = await soporteApi.get('/api/tickets/estadisticas');
     return data.data;

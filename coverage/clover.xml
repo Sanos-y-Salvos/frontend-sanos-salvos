@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1782791966585" clover="3.2.0">
-  <project timestamp="1782791966585" name="All files">
-    <metrics statements="1468" coveredstatements="1465" conditionals="1189" coveredconditionals="1112" methods="555" coveredmethods="544" elements="3212" coveredelements="3121" complexity="0" loc="1468" ncloc="1468" packages="12" files="30" classes="30"/>
+<coverage generated="1782825097331" clover="3.2.0">
+  <project timestamp="1782825097331" name="All files">
+    <metrics statements="1525" coveredstatements="1487" conditionals="1255" coveredconditionals="1121" methods="585" coveredmethods="547" elements="3365" coveredelements="3155" complexity="0" loc="1525" ncloc="1525" packages="13" files="31" classes="31"/>
+    <package name="components.admin">
+      <metrics statements="8" coveredstatements="4" conditionals="10" coveredconditionals="2" methods="5" coveredmethods="2"/>
+      <file name="DetailPanel.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\admin\DetailPanel.tsx">
+        <metrics statements="8" coveredstatements="4" conditionals="10" coveredconditionals="2" methods="5" coveredmethods="2"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="29" type="stmt"/>
+        <line num="16" count="29" type="cond" truecount="1" falsecount="1"/>
+        <line num="17" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="19" count="0" type="stmt"/>
+        <line num="22" count="29" type="stmt"/>
+        <line num="40" count="0" type="stmt"/>
+      </file>
+    </package>
     <package name="components.layout">
       <metrics statements="60" coveredstatements="60" conditionals="63" coveredconditionals="63" methods="36" coveredmethods="36"/>
-      <file name="BotonVolver.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/layout/BotonVolver.tsx">
+      <file name="BotonVolver.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\layout\BotonVolver.tsx">
         <metrics statements="6" coveredstatements="6" conditionals="5" coveredconditionals="5" methods="2" coveredmethods="2"/>
         <line num="10" count="1" type="cond" truecount="1" falsecount="0"/>
         <line num="11" count="6" type="stmt"/>
@@ -13,7 +27,7 @@
         <line num="15" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="18" count="6" type="stmt"/>
       </file>
-      <file name="Footer.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/layout/Footer.tsx">
+      <file name="Footer.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\layout\Footer.tsx">
         <metrics statements="11" coveredstatements="11" conditionals="2" coveredconditionals="2" methods="7" coveredmethods="7"/>
         <line num="5" count="2" type="stmt"/>
         <line num="6" count="88" type="stmt"/>
@@ -27,7 +41,7 @@
         <line num="92" count="261" type="stmt"/>
         <line num="94" count="1" type="stmt"/>
       </file>
-      <file name="Navbar.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/layout/Navbar.tsx">
+      <file name="Navbar.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\layout\Navbar.tsx">
         <metrics statements="43" coveredstatements="43" conditionals="56" coveredconditionals="56" methods="27" coveredmethods="27"/>
         <line num="12" count="3" type="stmt"/>
         <line num="20" count="3" type="stmt"/>
@@ -76,21 +90,21 @@
     </package>
     <package name="components.ui">
       <metrics statements="10" coveredstatements="10" conditionals="23" coveredconditionals="23" methods="3" coveredmethods="3"/>
-      <file name="Alert.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/ui/Alert.tsx">
+      <file name="Alert.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\ui\Alert.tsx">
         <metrics statements="4" coveredstatements="4" conditionals="1" coveredconditionals="1" methods="1" coveredmethods="1"/>
         <line num="9" count="1" type="stmt"/>
         <line num="16" count="1" type="cond" truecount="1" falsecount="0"/>
         <line num="17" count="10" type="stmt"/>
         <line num="18" count="10" type="stmt"/>
       </file>
-      <file name="Button.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/ui/Button.tsx">
+      <file name="Button.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\ui\Button.tsx">
         <metrics statements="4" coveredstatements="4" conditionals="11" coveredconditionals="11" methods="1" coveredmethods="1"/>
         <line num="11" count="1" type="stmt"/>
         <line num="19" count="1" type="stmt"/>
         <line num="25" count="1" type="stmt"/>
         <line num="36" count="17" type="stmt"/>
       </file>
-      <file name="Input.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/components/ui/Input.tsx">
+      <file name="Input.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\components\ui\Input.tsx">
         <metrics statements="2" coveredstatements="2" conditionals="11" coveredconditionals="11" methods="1" coveredmethods="1"/>
         <line num="7" count="1" type="cond" truecount="1" falsecount="0"/>
         <line num="8" count="13" type="stmt"/>
@@ -98,7 +112,7 @@
     </package>
     <package name="context">
       <metrics statements="87" coveredstatements="85" conditionals="50" coveredconditionals="42" methods="24" coveredmethods="21"/>
-      <file name="AdminModeContext.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/context/AdminModeContext.tsx">
+      <file name="AdminModeContext.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\context\AdminModeContext.tsx">
         <metrics statements="15" coveredstatements="15" conditionals="8" coveredconditionals="8" methods="6" coveredmethods="5"/>
         <line num="4" count="3" type="stmt"/>
         <line num="5" count="3" type="stmt"/>
@@ -116,7 +130,7 @@
         <line num="36" count="11" type="stmt"/>
         <line num="47" count="271" type="stmt"/>
       </file>
-      <file name="AuthContext.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/context/AuthContext.tsx">
+      <file name="AuthContext.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\context\AuthContext.tsx">
         <metrics statements="47" coveredstatements="45" conditionals="36" coveredconditionals="29" methods="7" coveredmethods="6"/>
         <line num="9" count="5" type="stmt"/>
         <line num="10" count="3" type="stmt"/>
@@ -166,9 +180,9 @@
         <line num="116" count="2" type="stmt"/>
         <line num="119" count="24" type="stmt"/>
       </file>
-      <file name="MensajeriaContext.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/context/MensajeriaContext.tsx">
+      <file name="MensajeriaContext.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\context\MensajeriaContext.tsx">
         <metrics statements="25" coveredstatements="25" conditionals="6" coveredconditionals="5" methods="11" coveredmethods="10"/>
-        <line num="6" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="6" count="3" type="cond" truecount="1" falsecount="1"/>
         <line num="15" count="3" type="stmt"/>
         <line num="22" count="3" type="stmt"/>
         <line num="23" count="18" type="stmt"/>
@@ -181,7 +195,7 @@
         <line num="31" count="1" type="stmt"/>
         <line num="32" count="1" type="stmt"/>
         <line num="35" count="6" type="stmt"/>
-        <line num="36" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="36" count="6" type="cond" truecount="2" falsecount="0"/>
         <line num="41" count="7" type="stmt"/>
         <line num="42" count="7" type="stmt"/>
         <line num="43" count="7" type="stmt"/>
@@ -197,16 +211,16 @@
     </package>
     <package name="hooks">
       <metrics statements="14" coveredstatements="14" conditionals="6" coveredconditionals="6" methods="5" coveredmethods="5"/>
-      <file name="useAuth.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/hooks/useAuth.ts">
+      <file name="useAuth.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\hooks\useAuth.ts">
         <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
         <line num="4" count="134" type="stmt"/>
       </file>
-      <file name="useSoporteSocket.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/hooks/useSoporteSocket.ts">
+      <file name="useSoporteSocket.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\hooks\useSoporteSocket.ts">
         <metrics statements="13" coveredstatements="13" conditionals="6" coveredconditionals="6" methods="4" coveredmethods="4"/>
         <line num="6" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="12" count="71" type="stmt"/>
-        <line num="13" count="71" type="stmt"/>
-        <line num="15" count="71" type="stmt"/>
+        <line num="12" count="69" type="stmt"/>
+        <line num="13" count="69" type="stmt"/>
+        <line num="15" count="69" type="stmt"/>
         <line num="16" count="32" type="cond" truecount="2" falsecount="0"/>
         <line num="17" count="31" type="stmt"/>
         <line num="18" count="31" type="cond" truecount="2" falsecount="0"/>
@@ -219,8 +233,8 @@
       </file>
     </package>
     <package name="pages.admin">
-      <metrics statements="547" coveredstatements="546" conditionals="540" coveredconditionals="490" methods="218" coveredmethods="214"/>
-      <file name="AdminMensajesPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/admin/AdminMensajesPage.tsx">
+      <metrics statements="596" coveredstatements="564" conditionals="596" coveredconditionals="498" methods="243" coveredmethods="215"/>
+      <file name="AdminMensajesPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\admin\AdminMensajesPage.tsx">
         <metrics statements="97" coveredstatements="97" conditionals="93" coveredconditionals="92" methods="42" coveredmethods="41"/>
         <line num="19" count="1" type="stmt"/>
         <line num="25" count="1" type="stmt"/>
@@ -320,80 +334,129 @@
         <line num="397" count="1" type="stmt"/>
         <line num="405" count="3" type="stmt"/>
       </file>
-      <file name="AdminPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/admin/AdminPage.tsx">
-        <metrics statements="70" coveredstatements="69" conditionals="92" coveredconditionals="83" methods="32" coveredmethods="32"/>
-        <line num="22" count="1" type="stmt"/>
-        <line num="31" count="1" type="stmt"/>
-        <line num="46" count="1" type="stmt"/>
-        <line num="47" count="154" type="cond" truecount="3" falsecount="1"/>
-        <line num="48" count="154" type="stmt"/>
-        <line num="57" count="1" type="stmt"/>
-        <line num="60" count="120" type="stmt"/>
-        <line num="72" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="76" count="165" type="stmt"/>
-        <line num="94" count="165" type="cond" truecount="1" falsecount="1"/>
-        <line num="95" count="0" type="stmt"/>
-        <line num="99" count="1" type="stmt"/>
-        <line num="103" count="90" type="stmt"/>
-        <line num="104" count="90" type="cond" truecount="2" falsecount="0"/>
-        <line num="105" count="84" type="stmt"/>
-        <line num="115" count="196" type="stmt"/>
-        <line num="122" count="84" type="stmt"/>
-        <line num="130" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="135" count="75" type="cond" truecount="2" falsecount="0"/>
-        <line num="136" count="70" type="stmt"/>
-        <line num="158" count="1" type="stmt"/>
-        <line num="161" count="60" type="stmt"/>
-        <line num="180" count="1" type="stmt"/>
+      <file name="AdminPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\admin\AdminPage.tsx">
+        <metrics statements="119" coveredstatements="87" conditionals="148" coveredconditionals="91" methods="57" coveredmethods="33"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="33" count="1" type="stmt"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="49" count="154" type="cond" truecount="3" falsecount="1"/>
+        <line num="50" count="154" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="62" count="120" type="stmt"/>
+        <line num="78" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="82" count="165" type="stmt"/>
+        <line num="100" count="165" type="cond" truecount="1" falsecount="1"/>
+        <line num="101" count="0" type="stmt"/>
+        <line num="105" count="1" type="stmt"/>
+        <line num="109" count="90" type="stmt"/>
+        <line num="110" count="90" type="cond" truecount="2" falsecount="0"/>
+        <line num="111" count="84" type="stmt"/>
+        <line num="121" count="196" type="stmt"/>
+        <line num="128" count="84" type="stmt"/>
+        <line num="136" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="141" count="75" type="cond" truecount="2" falsecount="0"/>
+        <line num="142" count="70" type="stmt"/>
+        <line num="164" count="1" type="stmt"/>
+        <line num="167" count="60" type="stmt"/>
         <line num="183" count="1" type="stmt"/>
-        <line num="186" count="1" type="stmt"/>
-        <line num="190" count="1" type="stmt"/>
-        <line num="197" count="1" type="stmt"/>
-        <line num="200" count="60" type="stmt"/>
-        <line num="216" count="1" type="stmt"/>
-        <line num="217" count="29" type="stmt"/>
-        <line num="219" count="29" type="stmt"/>
-        <line num="220" count="29" type="stmt"/>
-        <line num="221" count="29" type="stmt"/>
-        <line num="222" count="29" type="stmt"/>
-        <line num="223" count="29" type="stmt"/>
-        <line num="224" count="29" type="stmt"/>
-        <line num="226" count="29" type="stmt"/>
-        <line num="227" count="15" type="stmt"/>
-        <line num="228" count="15" type="stmt"/>
-        <line num="229" count="15" type="stmt"/>
-        <line num="235" count="13" type="stmt"/>
-        <line num="236" count="13" type="stmt"/>
-        <line num="237" count="13" type="stmt"/>
-        <line num="238" count="13" type="stmt"/>
-        <line num="239" count="13" type="stmt"/>
-        <line num="241" count="14" type="stmt"/>
-        <line num="244" count="29" type="stmt"/>
-        <line num="247" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="248" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="249" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="250" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="252" count="29" type="stmt"/>
-        <line num="253" count="29" type="stmt"/>
-        <line num="254" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="255" count="29" type="cond" truecount="3" falsecount="1"/>
-        <line num="256" count="29" type="cond" truecount="2" falsecount="0"/>
-        <line num="257" count="29" type="cond" truecount="3" falsecount="1"/>
-        <line num="258" count="29" type="cond" truecount="3" falsecount="1"/>
-        <line num="259" count="29" type="stmt"/>
-        <line num="260" count="14" type="cond" truecount="2" falsecount="0"/>
-        <line num="261" count="28" type="cond" truecount="2" falsecount="0"/>
-        <line num="263" count="56" type="cond" truecount="3" falsecount="1"/>
-        <line num="264" count="42" type="cond" truecount="2" falsecount="0"/>
-        <line num="265" count="42" type="cond" truecount="2" falsecount="0"/>
+        <line num="188" count="1" type="stmt"/>
+        <line num="192" count="1" type="stmt"/>
+        <line num="195" count="1" type="stmt"/>
+        <line num="199" count="1" type="stmt"/>
+        <line num="202" count="1" type="stmt"/>
+        <line num="206" count="1" type="stmt"/>
+        <line num="209" count="1" type="stmt"/>
+        <line num="212" count="1" type="stmt"/>
+        <line num="213" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="214" count="1" type="stmt"/>
+        <line num="215" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="222" count="1" type="stmt"/>
+        <line num="228" count="1" type="stmt"/>
+        <line num="231" count="1" type="stmt"/>
+        <line num="234" count="1" type="stmt"/>
+        <line num="238" count="1" type="stmt"/>
+        <line num="245" count="1" type="stmt"/>
+        <line num="248" count="60" type="stmt"/>
+        <line num="264" count="1" type="stmt"/>
+        <line num="265" count="29" type="stmt"/>
+        <line num="267" count="29" type="stmt"/>
+        <line num="268" count="29" type="stmt"/>
+        <line num="269" count="29" type="stmt"/>
         <line num="270" count="29" type="stmt"/>
-        <line num="274" count="29" type="stmt"/>
-        <line num="321" count="60" type="stmt"/>
-        <line num="403" count="14" type="cond" truecount="2" falsecount="0"/>
-        <line num="406" count="28" type="cond" truecount="2" falsecount="0"/>
-        <line num="409" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="271" count="29" type="stmt"/>
+        <line num="272" count="29" type="stmt"/>
+        <line num="273" count="29" type="stmt"/>
+        <line num="275" count="29" type="stmt"/>
+        <line num="276" count="15" type="stmt"/>
+        <line num="277" count="15" type="stmt"/>
+        <line num="278" count="15" type="stmt"/>
+        <line num="284" count="13" type="stmt"/>
+        <line num="285" count="13" type="stmt"/>
+        <line num="286" count="13" type="stmt"/>
+        <line num="287" count="13" type="stmt"/>
+        <line num="288" count="13" type="stmt"/>
+        <line num="290" count="14" type="stmt"/>
+        <line num="293" count="29" type="stmt"/>
+        <line num="295" count="29" type="stmt"/>
+        <line num="296" count="0" type="stmt"/>
+        <line num="297" count="0" type="stmt"/>
+        <line num="298" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="299" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="300" count="0" type="stmt"/>
+        <line num="301" count="0" type="stmt"/>
+        <line num="304" count="29" type="stmt"/>
+        <line num="305" count="0" type="stmt"/>
+        <line num="306" count="0" type="stmt"/>
+        <line num="307" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="308" count="0" type="stmt"/>
+        <line num="309" count="0" type="stmt"/>
+        <line num="312" count="29" type="stmt"/>
+        <line num="313" count="0" type="stmt"/>
+        <line num="314" count="0" type="stmt"/>
+        <line num="315" count="0" type="stmt"/>
+        <line num="316" count="0" type="stmt"/>
+        <line num="317" count="0" type="stmt"/>
+        <line num="321" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="322" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="323" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="324" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="326" count="29" type="stmt"/>
+        <line num="327" count="29" type="stmt"/>
+        <line num="328" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="329" count="29" type="cond" truecount="3" falsecount="1"/>
+        <line num="330" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="331" count="29" type="cond" truecount="3" falsecount="1"/>
+        <line num="332" count="29" type="cond" truecount="3" falsecount="1"/>
+        <line num="333" count="29" type="stmt"/>
+        <line num="334" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="335" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="337" count="56" type="cond" truecount="3" falsecount="1"/>
+        <line num="338" count="42" type="cond" truecount="2" falsecount="0"/>
+        <line num="339" count="42" type="cond" truecount="2" falsecount="0"/>
+        <line num="344" count="29" type="stmt"/>
+        <line num="349" count="29" type="stmt"/>
+        <line num="350" count="29" type="cond" truecount="1" falsecount="1"/>
+        <line num="351" count="29" type="stmt"/>
+        <line num="352" count="0" type="stmt"/>
+        <line num="357" count="0" type="stmt"/>
+        <line num="374" count="0" type="stmt"/>
+        <line num="391" count="0" type="stmt"/>
+        <line num="409" count="29" type="stmt"/>
+        <line num="415" count="0" type="stmt"/>
+        <line num="465" count="60" type="stmt"/>
+        <line num="480" count="0" type="cond" truecount="2" falsecount="0"/>
+        <line num="481" count="0" type="cond" truecount="2" falsecount="0"/>
+        <line num="482" count="0" type="stmt"/>
+        <line num="483" count="0" type="stmt"/>
+        <line num="546" count="0" type="stmt"/>
+        <line num="548" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="550" count="0" type="stmt"/>
+        <line num="552" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="554" count="0" type="stmt"/>
+        <line num="556" count="28" type="cond" truecount="2" falsecount="0"/>
+        <line num="558" count="0" type="stmt"/>
       </file>
-      <file name="AdminTicketsPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/admin/AdminTicketsPage.tsx">
+      <file name="AdminTicketsPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\admin\AdminTicketsPage.tsx">
         <metrics statements="110" coveredstatements="110" conditionals="102" coveredconditionals="99" methods="33" coveredmethods="33"/>
         <line num="17" count="2" type="stmt"/>
         <line num="23" count="2" type="stmt"/>
@@ -407,10 +470,10 @@
         <line num="36" count="95" type="cond" truecount="2" falsecount="0"/>
         <line num="37" count="94" type="cond" truecount="1" falsecount="1"/>
         <line num="40" count="2" type="stmt"/>
-        <line num="41" count="141" type="stmt"/>
-        <line num="42" count="141" type="cond" truecount="2" falsecount="0"/>
-        <line num="43" count="33" type="cond" truecount="2" falsecount="0"/>
-        <line num="44" count="9" type="stmt"/>
+        <line num="41" count="142" type="stmt"/>
+        <line num="42" count="142" type="cond" truecount="2" falsecount="0"/>
+        <line num="43" count="35" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="10" type="stmt"/>
         <line num="47" count="2" type="stmt"/>
         <line num="49" count="2" type="stmt"/>
         <line num="51" count="2" type="stmt"/>
@@ -430,25 +493,25 @@
         <line num="73" count="2" type="stmt"/>
         <line num="78" count="1" type="stmt"/>
         <line num="87" count="2" type="stmt"/>
-        <line num="96" count="43" type="stmt"/>
-        <line num="97" count="43" type="stmt"/>
-        <line num="98" count="43" type="stmt"/>
-        <line num="99" count="43" type="stmt"/>
-        <line num="100" count="43" type="stmt"/>
-        <line num="102" count="43" type="stmt"/>
-        <line num="104" count="43" type="stmt"/>
+        <line num="96" count="44" type="stmt"/>
+        <line num="97" count="44" type="stmt"/>
+        <line num="98" count="44" type="stmt"/>
+        <line num="99" count="44" type="stmt"/>
+        <line num="100" count="44" type="stmt"/>
+        <line num="102" count="44" type="stmt"/>
+        <line num="104" count="44" type="stmt"/>
         <line num="105" count="3" type="stmt"/>
         <line num="106" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="110" count="43" type="stmt"/>
+        <line num="110" count="44" type="stmt"/>
         <line num="111" count="22" type="stmt"/>
-        <line num="114" count="43" type="stmt"/>
+        <line num="114" count="44" type="stmt"/>
         <line num="115" count="2" type="stmt"/>
         <line num="116" count="2" type="stmt"/>
         <line num="117" count="2" type="stmt"/>
         <line num="118" count="1" type="stmt"/>
         <line num="120" count="1" type="stmt"/>
         <line num="122" count="2" type="stmt"/>
-        <line num="126" count="43" type="stmt"/>
+        <line num="126" count="44" type="stmt"/>
         <line num="127" count="2" type="cond" truecount="3" falsecount="1"/>
         <line num="128" count="2" type="stmt"/>
         <line num="129" count="2" type="stmt"/>
@@ -456,7 +519,7 @@
         <line num="131" count="1" type="stmt"/>
         <line num="133" count="1" type="stmt"/>
         <line num="135" count="2" type="stmt"/>
-        <line num="139" count="43" type="stmt"/>
+        <line num="139" count="44" type="stmt"/>
         <line num="140" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="141" count="2" type="stmt"/>
         <line num="142" count="2" type="stmt"/>
@@ -464,9 +527,9 @@
         <line num="144" count="1" type="stmt"/>
         <line num="146" count="1" type="stmt"/>
         <line num="148" count="2" type="stmt"/>
-        <line num="152" count="43" type="stmt"/>
+        <line num="152" count="44" type="stmt"/>
         <line num="231" count="2" type="stmt"/>
-        <line num="235" count="172" type="stmt"/>
+        <line num="235" count="176" type="stmt"/>
         <line num="265" count="22" type="stmt"/>
         <line num="266" count="22" type="stmt"/>
         <line num="306" count="2" type="stmt"/>
@@ -506,13 +569,13 @@
         <line num="482" count="98" type="stmt"/>
         <line num="487" count="18" type="stmt"/>
       </file>
-      <file name="AdminUsuariosPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/admin/AdminUsuariosPage.tsx">
+      <file name="AdminUsuariosPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\admin\AdminUsuariosPage.tsx">
         <metrics statements="270" coveredstatements="270" conditionals="253" coveredconditionals="216" methods="111" coveredmethods="108"/>
         <line num="24" count="1" type="stmt"/>
         <line num="32" count="1" type="stmt"/>
         <line num="36" count="1" type="stmt"/>
-        <line num="37" count="65" type="cond" truecount="1" falsecount="1"/>
-        <line num="38" count="65" type="stmt"/>
+        <line num="37" count="66" type="cond" truecount="1" falsecount="1"/>
+        <line num="38" count="66" type="stmt"/>
         <line num="40" count="1" type="stmt"/>
         <line num="46" count="1" type="stmt"/>
         <line num="48" count="1" type="stmt"/>
@@ -532,66 +595,66 @@
         <line num="70" count="1" type="stmt"/>
         <line num="75" count="1" type="stmt"/>
         <line num="83" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="84" count="126" type="stmt"/>
-        <line num="85" count="126" type="stmt"/>
-        <line num="86" count="126" type="cond" truecount="1" falsecount="1"/>
+        <line num="84" count="127" type="stmt"/>
+        <line num="85" count="127" type="stmt"/>
+        <line num="86" count="127" type="cond" truecount="1" falsecount="1"/>
         <line num="92" count="1" type="stmt"/>
-        <line num="93" count="359" type="stmt"/>
-        <line num="94" count="359" type="stmt"/>
-        <line num="96" count="359" type="stmt"/>
-        <line num="99" count="359" type="stmt"/>
-        <line num="100" count="359" type="stmt"/>
-        <line num="101" count="359" type="stmt"/>
-        <line num="102" count="359" type="stmt"/>
-        <line num="103" count="359" type="stmt"/>
-        <line num="104" count="359" type="stmt"/>
-        <line num="105" count="359" type="stmt"/>
-        <line num="106" count="359" type="stmt"/>
-        <line num="109" count="359" type="stmt"/>
-        <line num="110" count="359" type="stmt"/>
-        <line num="111" count="359" type="stmt"/>
-        <line num="112" count="359" type="stmt"/>
-        <line num="113" count="359" type="stmt"/>
-        <line num="114" count="359" type="stmt"/>
-        <line num="115" count="359" type="stmt"/>
-        <line num="116" count="359" type="stmt"/>
-        <line num="117" count="359" type="stmt"/>
-        <line num="120" count="359" type="stmt"/>
-        <line num="121" count="359" type="stmt"/>
-        <line num="122" count="359" type="stmt"/>
-        <line num="123" count="359" type="stmt"/>
-        <line num="124" count="359" type="stmt"/>
-        <line num="127" count="359" type="stmt"/>
-        <line num="128" count="359" type="stmt"/>
-        <line num="129" count="359" type="stmt"/>
-        <line num="131" count="359" type="stmt"/>
-        <line num="132" count="359" type="stmt"/>
-        <line num="133" count="359" type="stmt"/>
+        <line num="93" count="360" type="stmt"/>
+        <line num="94" count="360" type="stmt"/>
+        <line num="96" count="360" type="stmt"/>
+        <line num="99" count="360" type="stmt"/>
+        <line num="100" count="360" type="stmt"/>
+        <line num="101" count="360" type="stmt"/>
+        <line num="102" count="360" type="stmt"/>
+        <line num="103" count="360" type="stmt"/>
+        <line num="104" count="360" type="stmt"/>
+        <line num="105" count="360" type="stmt"/>
+        <line num="106" count="360" type="stmt"/>
+        <line num="109" count="360" type="stmt"/>
+        <line num="110" count="360" type="stmt"/>
+        <line num="111" count="360" type="stmt"/>
+        <line num="112" count="360" type="stmt"/>
+        <line num="113" count="360" type="stmt"/>
+        <line num="114" count="360" type="stmt"/>
+        <line num="115" count="360" type="stmt"/>
+        <line num="116" count="360" type="stmt"/>
+        <line num="117" count="360" type="stmt"/>
+        <line num="120" count="360" type="stmt"/>
+        <line num="121" count="360" type="stmt"/>
+        <line num="122" count="360" type="stmt"/>
+        <line num="123" count="360" type="stmt"/>
+        <line num="124" count="360" type="stmt"/>
+        <line num="127" count="360" type="stmt"/>
+        <line num="128" count="360" type="stmt"/>
+        <line num="129" count="360" type="stmt"/>
+        <line num="131" count="360" type="stmt"/>
+        <line num="132" count="360" type="stmt"/>
+        <line num="133" count="360" type="stmt"/>
         <line num="134" count="65" type="cond" truecount="2" falsecount="0"/>
         <line num="135" count="63" type="stmt"/>
-        <line num="137" count="359" type="stmt"/>
+        <line num="137" count="360" type="stmt"/>
         <line num="138" count="82" type="cond" truecount="2" falsecount="0"/>
         <line num="141" count="962" type="cond" truecount="2" falsecount="0"/>
-        <line num="143" count="359" type="stmt"/>
+        <line num="143" count="360" type="stmt"/>
         <line num="144" count="15" type="stmt"/>
         <line num="145" count="15" type="stmt"/>
         <line num="146" count="15" type="cond" truecount="2" falsecount="0"/>
-        <line num="148" count="359" type="stmt"/>
+        <line num="148" count="360" type="stmt"/>
         <line num="149" count="13" type="stmt"/>
         <line num="150" count="13" type="cond" truecount="2" falsecount="0"/>
         <line num="151" count="1" type="stmt"/>
         <line num="152" count="1" type="cond" truecount="2" falsecount="0"/>
-        <line num="155" count="359" type="stmt"/>
+        <line num="155" count="360" type="stmt"/>
         <line num="156" count="3" type="stmt"/>
         <line num="157" count="3" type="stmt"/>
         <line num="158" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="159" count="1" type="stmt"/>
         <line num="160" count="1" type="cond" truecount="2" falsecount="0"/>
-        <line num="163" count="359" type="stmt"/>
+        <line num="163" count="360" type="stmt"/>
         <line num="164" count="21" type="stmt"/>
         <line num="165" count="21" type="stmt"/>
         <line num="166" count="21" type="stmt"/>
-        <line num="169" count="359" type="stmt"/>
+        <line num="169" count="360" type="stmt"/>
         <line num="170" count="77" type="stmt"/>
         <line num="171" count="77" type="stmt"/>
         <line num="172" count="77" type="stmt"/>
@@ -600,7 +663,7 @@
         <line num="175" count="77" type="stmt"/>
         <line num="176" count="1" type="stmt"/>
         <line num="177" count="76" type="stmt"/>
-        <line num="180" count="359" type="stmt"/>
+        <line num="180" count="360" type="stmt"/>
         <line num="181" count="20" type="stmt"/>
         <line num="182" count="20" type="stmt"/>
         <line num="183" count="19" type="stmt"/>
@@ -618,7 +681,7 @@
         <line num="198" count="5" type="cond" truecount="1" falsecount="1"/>
         <line num="200" count="19" type="stmt"/>
         <line num="201" count="1" type="stmt"/>
-        <line num="204" count="359" type="stmt"/>
+        <line num="204" count="360" type="stmt"/>
         <line num="205" count="3" type="cond" truecount="1" falsecount="1"/>
         <line num="206" count="3" type="stmt"/>
         <line num="207" count="3" type="stmt"/>
@@ -628,7 +691,7 @@
         <line num="211" count="3" type="stmt"/>
         <line num="212" count="1" type="stmt"/>
         <line num="213" count="3" type="stmt"/>
-        <line num="216" count="359" type="stmt"/>
+        <line num="216" count="360" type="stmt"/>
         <line num="217" count="2" type="cond" truecount="3" falsecount="1"/>
         <line num="218" count="2" type="stmt"/>
         <line num="219" count="2" type="stmt"/>
@@ -638,7 +701,7 @@
         <line num="223" count="1" type="stmt"/>
         <line num="224" count="1" type="stmt"/>
         <line num="225" count="2" type="stmt"/>
-        <line num="228" count="359" type="stmt"/>
+        <line num="228" count="360" type="stmt"/>
         <line num="229" count="4" type="cond" truecount="1" falsecount="1"/>
         <line num="230" count="4" type="stmt"/>
         <line num="231" count="4" type="stmt"/>
@@ -654,7 +717,7 @@
         <line num="253" count="2" type="stmt"/>
         <line num="255" count="1" type="cond" truecount="1" falsecount="1"/>
         <line num="256" count="3" type="stmt"/>
-        <line num="259" count="359" type="stmt"/>
+        <line num="259" count="360" type="stmt"/>
         <line num="260" count="8" type="stmt"/>
         <line num="261" count="8" type="stmt"/>
         <line num="262" count="8" type="stmt"/>
@@ -695,14 +758,14 @@
         <line num="301" count="3" type="stmt"/>
         <line num="303" count="3" type="cond" truecount="2" falsecount="1"/>
         <line num="304" count="6" type="stmt"/>
-        <line num="307" count="359" type="stmt"/>
-        <line num="308" count="150" type="cond" truecount="2" falsecount="0"/>
-        <line num="313" count="359" type="cond" truecount="2" falsecount="0"/>
-        <line num="314" count="65" type="stmt"/>
-        <line num="315" count="65" type="stmt"/>
+        <line num="307" count="360" type="stmt"/>
+        <line num="308" count="151" type="cond" truecount="2" falsecount="0"/>
+        <line num="313" count="360" type="cond" truecount="2" falsecount="0"/>
+        <line num="314" count="66" type="stmt"/>
+        <line num="315" count="66" type="stmt"/>
         <line num="322" count="1" type="stmt"/>
-        <line num="369" count="390" type="stmt"/>
-        <line num="392" count="250" type="stmt"/>
+        <line num="369" count="396" type="stmt"/>
+        <line num="392" count="255" type="stmt"/>
         <line num="413" count="60" type="stmt"/>
         <line num="431" count="9" type="stmt"/>
         <line num="455" count="1" type="stmt"/>
@@ -782,7 +845,7 @@
     </package>
     <package name="pages.auth">
       <metrics statements="215" coveredstatements="215" conditionals="111" coveredconditionals="111" methods="85" coveredmethods="84"/>
-      <file name="LoginPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/auth/LoginPage.tsx">
+      <file name="LoginPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\auth\LoginPage.tsx">
         <metrics statements="27" coveredstatements="27" conditionals="10" coveredconditionals="10" methods="10" coveredmethods="10"/>
         <line num="9" count="1" type="stmt"/>
         <line num="10" count="36" type="stmt"/>
@@ -812,7 +875,7 @@
         <line num="141" count="1" type="stmt"/>
         <line num="171" count="1" type="stmt"/>
       </file>
-      <file name="RegisterPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/auth/RegisterPage.tsx">
+      <file name="RegisterPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\auth\RegisterPage.tsx">
         <metrics statements="149" coveredstatements="149" conditionals="79" coveredconditionals="79" methods="66" coveredmethods="65"/>
         <line num="20" count="1" type="stmt"/>
         <line num="21" count="548" type="stmt"/>
@@ -964,7 +1027,7 @@
         <line num="558" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="585" count="1" type="stmt"/>
       </file>
-      <file name="ResetPasswordPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/auth/ResetPasswordPage.tsx">
+      <file name="ResetPasswordPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\auth\ResetPasswordPage.tsx">
         <metrics statements="39" coveredstatements="39" conditionals="22" coveredconditionals="22" methods="9" coveredmethods="9"/>
         <line num="11" count="1" type="stmt"/>
         <line num="12" count="72" type="stmt"/>
@@ -1009,7 +1072,7 @@
     </package>
     <package name="pages.mapa">
       <metrics statements="34" coveredstatements="34" conditionals="28" coveredconditionals="28" methods="11" coveredmethods="11"/>
-      <file name="MapaPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/mapa/MapaPage.tsx">
+      <file name="MapaPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\mapa\MapaPage.tsx">
         <metrics statements="34" coveredstatements="34" conditionals="28" coveredconditionals="28" methods="11" coveredmethods="11"/>
         <line num="11" count="1" type="stmt"/>
         <line num="12" count="1" type="stmt"/>
@@ -1049,7 +1112,7 @@
     </package>
     <package name="pages.perfil">
       <metrics statements="183" coveredstatements="183" conditionals="140" coveredconditionals="122" methods="76" coveredmethods="73"/>
-      <file name="PerfilPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/perfil/PerfilPage.tsx">
+      <file name="PerfilPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\perfil\PerfilPage.tsx">
         <metrics statements="183" coveredstatements="183" conditionals="140" coveredconditionals="122" methods="76" coveredmethods="73"/>
         <line num="22" count="1" type="stmt"/>
         <line num="30" count="1" type="stmt"/>
@@ -1238,7 +1301,7 @@
     </package>
     <package name="pages.reportes">
       <metrics statements="54" coveredstatements="54" conditionals="36" coveredconditionals="36" methods="19" coveredmethods="19"/>
-      <file name="ReportesPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/reportes/ReportesPage.tsx">
+      <file name="ReportesPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\reportes\ReportesPage.tsx">
         <metrics statements="54" coveredstatements="54" conditionals="36" coveredconditionals="36" methods="19" coveredmethods="19"/>
         <line num="10" count="1" type="cond" truecount="2" falsecount="0"/>
         <line num="11" count="1" type="stmt"/>
@@ -1298,7 +1361,7 @@
     </package>
     <package name="pages.soporte">
       <metrics statements="96" coveredstatements="96" conditionals="88" coveredconditionals="87" methods="35" coveredmethods="35"/>
-      <file name="NuevoTicketPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/soporte/NuevoTicketPage.tsx">
+      <file name="NuevoTicketPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\soporte\NuevoTicketPage.tsx">
         <metrics statements="33" coveredstatements="33" conditionals="39" coveredconditionals="39" methods="9" coveredmethods="9"/>
         <line num="16" count="1" type="stmt"/>
         <line num="22" count="1" type="stmt"/>
@@ -1334,7 +1397,7 @@
         <line num="196" count="2" type="stmt"/>
         <line num="212" count="9" type="stmt"/>
       </file>
-      <file name="SoportePage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/soporte/SoportePage.tsx">
+      <file name="SoportePage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\soporte\SoportePage.tsx">
         <metrics statements="8" coveredstatements="8" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="5"/>
         <line num="11" count="35" type="cond" truecount="1" falsecount="0"/>
         <line num="18" count="1" type="stmt"/>
@@ -1345,28 +1408,28 @@
         <line num="66" count="1" type="stmt"/>
         <line num="106" count="27" type="stmt"/>
       </file>
-      <file name="TicketsPage.tsx" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/pages/soporte/TicketsPage.tsx">
+      <file name="TicketsPage.tsx" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\pages\soporte\TicketsPage.tsx">
         <metrics statements="55" coveredstatements="55" conditionals="46" coveredconditionals="45" methods="21" coveredmethods="21"/>
         <line num="19" count="2" type="stmt"/>
         <line num="25" count="2" type="stmt"/>
         <line num="28" count="2" type="stmt"/>
         <line num="31" count="2" type="stmt"/>
-        <line num="32" count="64" type="stmt"/>
-        <line num="33" count="64" type="cond" truecount="2" falsecount="0"/>
-        <line num="34" count="21" type="cond" truecount="2" falsecount="0"/>
-        <line num="35" count="13" type="stmt"/>
+        <line num="32" count="60" type="stmt"/>
+        <line num="33" count="60" type="cond" truecount="2" falsecount="0"/>
+        <line num="34" count="20" type="cond" truecount="2" falsecount="0"/>
+        <line num="35" count="12" type="stmt"/>
         <line num="39" count="2" type="stmt"/>
-        <line num="42" count="29" type="stmt"/>
-        <line num="43" count="29" type="stmt"/>
-        <line num="44" count="29" type="stmt"/>
-        <line num="45" count="29" type="stmt"/>
-        <line num="47" count="29" type="stmt"/>
-        <line num="49" count="29" type="stmt"/>
+        <line num="42" count="25" type="stmt"/>
+        <line num="43" count="25" type="stmt"/>
+        <line num="44" count="25" type="stmt"/>
+        <line num="45" count="25" type="stmt"/>
+        <line num="47" count="25" type="stmt"/>
+        <line num="49" count="25" type="stmt"/>
         <line num="50" count="3" type="stmt"/>
         <line num="51" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="55" count="29" type="stmt"/>
+        <line num="55" count="25" type="stmt"/>
         <line num="56" count="11" type="stmt"/>
-        <line num="59" count="29" type="stmt"/>
+        <line num="59" count="25" type="stmt"/>
         <line num="60" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="61" count="2" type="stmt"/>
         <line num="62" count="2" type="stmt"/>
@@ -1374,7 +1437,7 @@
         <line num="64" count="1" type="stmt"/>
         <line num="66" count="1" type="stmt"/>
         <line num="68" count="2" type="stmt"/>
-        <line num="72" count="29" type="stmt"/>
+        <line num="72" count="25" type="stmt"/>
         <line num="115" count="11" type="stmt"/>
         <line num="116" count="11" type="stmt"/>
         <line num="139" count="2" type="stmt"/>
@@ -1405,10 +1468,10 @@
       </file>
     </package>
     <package name="services">
-      <metrics statements="93" coveredstatements="93" conditionals="18" coveredconditionals="18" methods="27" coveredmethods="27"/>
-      <file name="api.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/services/api.ts">
-        <metrics statements="54" coveredstatements="54" conditionals="14" coveredconditionals="14" methods="9" coveredmethods="9"/>
-        <line num="4" count="5" type="cond" truecount="2" falsecount="0"/>
+      <metrics statements="93" coveredstatements="93" conditionals="18" coveredconditionals="17" methods="27" coveredmethods="27"/>
+      <file name="api.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\services\api.ts">
+        <metrics statements="54" coveredstatements="54" conditionals="14" coveredconditionals="13" methods="9" coveredmethods="9"/>
+        <line num="4" count="5" type="cond" truecount="1" falsecount="1"/>
         <line num="6" count="5" type="stmt"/>
         <line num="7" count="5" type="stmt"/>
         <line num="8" count="5" type="stmt"/>
@@ -1463,7 +1526,7 @@
         <line num="83" count="5" type="stmt"/>
         <line num="84" count="5" type="stmt"/>
       </file>
-      <file name="authService.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/services/authService.ts">
+      <file name="authService.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\services\authService.ts">
         <metrics statements="8" coveredstatements="8" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
         <line num="4" count="5" type="stmt"/>
         <line num="6" count="2" type="stmt"/>
@@ -1474,7 +1537,7 @@
         <line num="27" count="2" type="stmt"/>
         <line num="28" count="1" type="stmt"/>
       </file>
-      <file name="userService.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/services/userService.ts">
+      <file name="userService.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\services\userService.ts">
         <metrics statements="31" coveredstatements="31" conditionals="4" coveredconditionals="4" methods="14" coveredmethods="14"/>
         <line num="4" count="5" type="stmt"/>
         <line num="6" count="1" type="stmt"/>
@@ -1511,7 +1574,7 @@
     </package>
     <package name="utils">
       <metrics statements="75" coveredstatements="75" conditionals="86" coveredconditionals="86" methods="16" coveredmethods="16"/>
-      <file name="rutFormatter.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/utils/rutFormatter.ts">
+      <file name="rutFormatter.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\utils\rutFormatter.ts">
         <metrics statements="8" coveredstatements="8" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
         <line num="5" count="9" type="stmt"/>
         <line num="6" count="9" type="cond" truecount="2" falsecount="0"/>
@@ -1522,7 +1585,7 @@
         <line num="13" count="7" type="stmt"/>
         <line num="18" count="13" type="stmt"/>
       </file>
-      <file name="storage.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/utils/storage.ts">
+      <file name="storage.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\utils\storage.ts">
         <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>
         <line num="1" count="7" type="stmt"/>
         <line num="2" count="28" type="stmt"/>
@@ -1532,7 +1595,7 @@
         <line num="11" count="2" type="stmt"/>
         <line num="12" count="2" type="stmt"/>
       </file>
-      <file name="validators.ts" path="/Users/felruizrojas/fel-school/sanos_salvos/frontend-sanos-salvos/src/utils/validators.ts">
+      <file name="validators.ts" path="C:\Users\benja\Desktop\Clases\FullStack3\frontend-sanos-salvos\src\utils\validators.ts">
         <metrics statements="60" coveredstatements="60" conditionals="82" coveredconditionals="82" methods="10" coveredmethods="10"/>
         <line num="3" count="6" type="stmt"/>
         <line num="4" count="6" type="stmt"/>

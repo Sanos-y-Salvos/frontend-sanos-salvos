@@ -19,6 +19,7 @@ import AdminPage from './pages/admin/AdminPage';
 import AdminTicketsPage from './pages/admin/AdminTicketsPage';
 import AdminUsuariosPage from './pages/admin/AdminUsuariosPage';
 import AdminMensajesPage from './pages/admin/AdminMensajesPage';
+import AdminReportesPage from './pages/admin/AdminReportesPage';
 import AnalisisUsuariosPage from './pages/admin/analisis/AnalisisUsuariosPage';
 import AnalisisMascotasPage from './pages/admin/analisis/AnalisisMascotasPage';
 import AnalisisTicketsPage from './pages/admin/analisis/AnalisisTicketsPage';
@@ -92,6 +93,7 @@ const AppRoutes = () => {
           <Route path="/admin/analisis/usuarios" element={<AdminRoute><AnalisisUsuariosPage /></AdminRoute>} />
           <Route path="/admin/analisis/mascotas" element={<AdminRoute><AnalisisMascotasPage /></AdminRoute>} />
           <Route path="/admin/analisis/tickets" element={<AdminRoute><AnalisisTicketsPage /></AdminRoute>} />
+          <Route path="/admin/reportes" element={<AdminRoute><AdminReportesPage /></AdminRoute>} />
           <Route path="/admin/ayuda" element={<AdminRoute><AdminAyudaPage /></AdminRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

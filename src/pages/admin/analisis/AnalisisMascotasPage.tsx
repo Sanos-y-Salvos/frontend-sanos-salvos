@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { PawPrint, TrendingUp, Search, CheckCircle, Loader2, X, SlidersHorizontal } from 'lucide-react';
+import { PawPrint, TrendingUp, Search, CheckCircle, Loader2, X, SlidersHorizontal, MapPin } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   ComposedChart, Line, ReferenceLine,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
-import { getEstadisticasReportes, type EstadisticasReportes } from '../../../services/reporteService';
+import { getEstadisticasReportes, listarReportes, type EstadisticasReportes } from '../../../services/reporteService';
+import type { Reporte } from '../../../types';
 import Navbar from '../../../components/layout/Navbar';
 import Footer from '../../../components/layout/Footer';
 import Alert from '../../../components/ui/Alert';
+import DetailPanel from '../../../components/admin/DetailPanel';
 
 /* ── paletas ──────────────────────────────────────────────────────────── */
 const ESPECIE_COLORS: Record<string, string> = {
@@ -39,36 +41,68 @@ const fmtMes = (mes: string) => {
 const inRange = (mes: string, desde: string, hasta: string) =>
   (!desde || mes >= desde) && (!hasta || mes <= hasta);
 
-const KpiCard = ({ icon: Icon, value, label, color, sub }: {
-  icon: React.ElementType; value: string | number; label: string; color: string; sub?: string;
+const TIPO_BADGE: Record<string, string> = {
+  PERDIDA:    'bg-rose-100 text-rose-700',
+  ENCONTRADA: 'bg-emerald-100 text-emerald-700',
+};
+const ESTADO_BADGE: Record<string, string> = {
+  EN_BUSQUEDA: 'bg-amber-100 text-amber-700',
+  RESUELTO:    'bg-emerald-100 text-emerald-700',
+  ABANDONADO:  'bg-slate-100 text-slate-500',
+  OCULTO:      'bg-slate-50 text-slate-400',
+};
+const ESTADO_LABEL_BADGE: Record<string, string> = {
+  EN_BUSQUEDA: 'En búsqueda', RESUELTO: 'Resuelto', ABANDONADO: 'Abandonado', OCULTO: 'Oculto',
+};
+const fmtFecha = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+const inDateRange = (iso?: string, desde?: string, hasta?: string) => {
+  if (!iso || (!desde && !hasta)) return true;
+  const ym = iso.slice(0, 7);
+  return (!desde || ym >= desde) && (!hasta || ym <= hasta);
+};
+
+const KpiCard = ({ icon: Icon, value, label, color, sub, onClick }: {
+  icon: React.ElementType; value: string | number; label: string; color: string; sub?: string; onClick?: () => void;
 }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4">
+  <div
+    onClick={onClick}
+    className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 transition-all duration-150 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-slate-200 active:scale-[0.99]' : ''}`}
+  >
     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
       <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
     </div>
-    <div>
+    <div className="flex-1 min-w-0">
       <p className="text-2xl font-display font-bold text-slate-900">{value}</p>
       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
       {sub && <p className="text-[10px] text-slate-400 mt-0.5">{sub}</p>}
     </div>
+    {onClick && <span className="text-[10px] text-slate-300 flex-shrink-0">Ver →</span>}
   </div>
 );
 
-const ChartCard = ({ title, children, className = '' }: {
-  title: string; children: React.ReactNode; className?: string;
+const ChartCard = ({ title, children, className = '', note }: {
+  title: string; children: React.ReactNode; className?: string; note?: string;
 }) => (
   <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
     className={`bg-white rounded-2xl border border-slate-100 shadow-sm p-5 ${className}`}>
     <p className="text-sm font-semibold text-slate-700 mb-4">{title}</p>
     {children}
+    {note && <p className="text-[10px] text-slate-400 mt-3 pt-2.5 border-t border-slate-50 italic">{note}</p>}
   </motion.div>
 );
 
-const InsightCard = ({ label, value, sub, bar }: {
-  label: string; value: string | number; sub?: string; bar?: number;
+const InsightCard = ({ label, value, sub, bar, onClick }: {
+  label: string; value: string | number; sub?: string; bar?: number; onClick?: () => void;
 }) => (
-  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+  <div
+    onClick={onClick}
+    className={`bg-white rounded-2xl border border-slate-200 shadow-sm p-4 transition-all duration-150 ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300 active:scale-[0.99]' : ''}`}
+  >
+    <div className="flex items-center justify-between">
+      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{label}</p>
+      {onClick && <span className="text-[10px] text-slate-300">Ver →</span>}
+    </div>
     <p className="text-2xl font-display font-bold text-slate-900 mt-1">{value}</p>
     {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     {bar !== undefined && (
@@ -79,6 +113,46 @@ const InsightCard = ({ label, value, sub, bar }: {
     )}
   </div>
 );
+
+/* ── tabla de reportes en el panel ───────────────────────────────────── */
+const ReportesTable = ({ reportes }: { reportes: Reporte[] }) => {
+  if (!reportes.length)
+    return <p className="text-sm text-slate-400 text-center py-16">No hay registros para mostrar.</p>;
+  return (
+    <div className="px-6 py-4">
+      <p className="text-xs text-slate-400 mb-3">{reportes.length} registro{reportes.length !== 1 ? 's' : ''}</p>
+      <div className="space-y-2">
+        {reportes.map(r => (
+          <div key={r.id} className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800 truncate">{r.nombreMascota}</p>
+              <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-400 truncate">
+                {r.direccionReferencia ? (
+                  <><MapPin className="w-3 h-3 flex-shrink-0" /><span className="truncate">{r.direccionReferencia}</span></>
+                ) : (
+                  <span>{especieLabel[r.especie] ?? r.especie}</span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${TIPO_BADGE[r.tipo] ?? 'bg-slate-100 text-slate-600'}`}>
+                {r.tipo === 'PERDIDA' ? 'Perdida' : 'Encontrada'}
+              </span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ESTADO_BADGE[r.estado] ?? 'bg-slate-100 text-slate-500'}`}>
+                {ESTADO_LABEL_BADGE[r.estado] ?? r.estado}
+              </span>
+              <span className="text-[10px] text-slate-400 hidden sm:block">{fmtFecha(r.fechaPublicacion)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── panel state ──────────────────────────────────────────────────────── */
+interface PanelState { open: boolean; title: string; subtitle: string; reportes: Reporte[]; loading: boolean; }
+const PANEL_CLOSED: PanelState = { open: false, title: '', subtitle: '', reportes: [], loading: false };
 
 const CustomTooltip = ({ active, payload, label }: any) =>
   active && payload?.length ? (
@@ -97,6 +171,7 @@ const AnalisisMascotasPage = () => {
   const [stats,   setStats]   = useState<EstadisticasReportes | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [panel,   setPanel]   = useState<PanelState>(PANEL_CLOSED);
 
   /* filtros */
   const [mesDesde,      setMesDesde]      = useState('');
@@ -111,7 +186,36 @@ const AnalisisMascotasPage = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  /* ── abrir panel ─────────────────────────────────────────────────── */
+  const openPanel = useCallback(async (title: string, overrides?: { tipo?: string; estado?: string; especie?: string }) => {
+    setPanel({ open: true, title, subtitle: '', reportes: [], loading: true });
+    try {
+      const tipo    = overrides?.tipo    ?? filtroTipo    ?? undefined;
+      const especie = overrides?.especie ?? filtroEspecie ?? undefined;
+      const estado  = overrides?.estado;
+      const res = await listarReportes({
+        ...(tipo    ? { tipo }    : {}),
+        ...(especie ? { especie } : {}),
+        ...(estado  ? { estado }  : {}),
+        limit: 500,
+      });
+      let lista = res.data;
+      if (mesDesde || mesHasta)
+        lista = lista.filter(r => inDateRange(r.fechaPublicacion, mesDesde, mesHasta));
+      const sub = [
+        mesDesde && `desde ${mesDesde}`, mesHasta && `hasta ${mesHasta}`,
+        tipo && (tipo === 'PERDIDA' ? 'Perdidas' : 'Encontradas'),
+        especie && (especieLabel[especie] ?? especie),
+        estado && (ESTADO_LABEL_BADGE[estado] ?? estado),
+      ].filter(Boolean).join(' · ');
+      setPanel(p => ({ ...p, loading: false, reportes: lista, subtitle: sub }));
+    } catch {
+      setPanel(p => ({ ...p, loading: false }));
+    }
+  }, [filtroTipo, filtroEspecie, mesDesde, mesHasta]);
+
   const filtrosActivos = !!(mesDesde || mesHasta || filtroTipo || filtroEspecie);
+  const filtrosCount   = [mesDesde, mesHasta, filtroTipo, filtroEspecie].filter(Boolean).length;
   const resetFiltros = () => { setMesDesde(''); setMesHasta(''); setFiltroTipo(''); setFiltroEspecie(''); };
 
   /* mes total */
@@ -122,8 +226,7 @@ const AnalisisMascotasPage = () => {
       /* re-aggregate from granular rows */
       const src = filtroEspecie
         ? (stats.por_mes_especie ?? []).filter(d =>
-            inRange(d.mes, mesDesde, mesHasta) && d.especie === filtroEspecie &&
-            (!filtroTipo || (filtroTipo === 'PERDIDA' ? true : false)))
+            inRange(d.mes, mesDesde, mesHasta) && d.especie === filtroEspecie)
         : (stats.por_mes_tipo ?? []).filter(d =>
             inRange(d.mes, mesDesde, mesHasta) && (!filtroTipo || d.tipo === filtroTipo));
       const map: Record<string, number> = {};
@@ -180,7 +283,11 @@ const AnalisisMascotasPage = () => {
       .map(e => ({ name: especieLabel[e.especie] ?? e.especie, value: e.count, fill: ESPECIE_COLORS[e.especie] ?? '#94a3b8', especie: e.especie }));
   }, [stats, mesDesde, mesHasta, filtroEspecie, filtrosActivos]);
 
-  const totalPeriodo = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
+  const totalPeriodo       = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
+  const perdidosPeriodo    = useMemo(
+    () => tipoMesData.reduce((s, d) => s + ((d as any).PERDIDA    ?? 0), 0), [tipoMesData]);
+  const encontradosPeriodo = useMemo(
+    () => tipoMesData.reduce((s, d) => s + ((d as any).ENCONTRADA ?? 0), 0), [tipoMesData]);
 
   /* crecimiento mes a mes */
   const crecimientoData = useMemo(() =>
@@ -243,6 +350,17 @@ const AnalisisMascotasPage = () => {
     <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
 
+      {/* ── Panel detalle ─────────────────────────────────────────────── */}
+      <DetailPanel
+        isOpen={panel.open}
+        onClose={() => setPanel(PANEL_CLOSED)}
+        title={panel.title}
+        subtitle={panel.subtitle || undefined}
+        loading={panel.loading}
+      >
+        <ReportesTable reportes={panel.reportes} />
+      </DetailPanel>
+
       <div className="bg-white border-b border-slate-100">
         <div className="px-6 lg:px-8 py-5">
           <div className="flex items-center gap-2.5">
@@ -288,10 +406,15 @@ const AnalisisMascotasPage = () => {
             </div>
 
             {filtrosActivos && (
-              <button onClick={resetFiltros}
-                className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 border border-rose-200 bg-rose-50 px-3 py-2 rounded-xl transition-all self-end">
-                <X className="w-3.5 h-3.5" /> Limpiar
-              </button>
+              <>
+                <span className="self-center inline-flex items-center gap-1 text-xs font-semibold bg-brand-50 text-brand-600 border border-brand-200 px-2.5 py-1.5 rounded-full">
+                  {filtrosCount} filtro{filtrosCount > 1 ? 's' : ''} activo{filtrosCount > 1 ? 's' : ''}
+                </span>
+                <button onClick={resetFiltros}
+                  className="flex items-center gap-1.5 text-xs font-medium text-rose-500 hover:text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition-all self-end">
+                  <X className="w-3.5 h-3.5" /> Limpiar filtros
+                </button>
+              </>
             )}
           </div>
           {filtrosActivos && (
@@ -306,11 +429,29 @@ const AnalisisMascotasPage = () => {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={PawPrint}    value={stats.total}  label="Total reportes"        color="bg-amber-500"
-            sub={filtrosActivos ? `${totalPeriodo} en el período` : undefined} />
-          <KpiCard icon={Search}      value={perdidos}     label="Mascotas perdidas"      color="bg-rose-500" />
-          <KpiCard icon={TrendingUp}  value={encontrados}  label="Mascotas encontradas"   color="bg-emerald-500" />
-          <KpiCard icon={CheckCircle} value={resueltos}    label="Casos resueltos"        color="bg-indigo-500" />
+          <KpiCard icon={PawPrint}
+            value={filtrosActivos ? totalPeriodo : stats.total}
+            label={filtrosActivos ? 'Reportes en período' : 'Total reportes'}
+            color="bg-amber-500"
+            onClick={() => openPanel('Todos los reportes')} />
+          <KpiCard icon={Search}
+            value={filtrosActivos ? perdidosPeriodo : perdidos}
+            label="Mascotas perdidas"
+            color="bg-rose-500"
+            sub={filtrosActivos && filtroEspecie ? 'sin desglose por especie' : undefined}
+            onClick={() => openPanel('Mascotas perdidas', { tipo: 'PERDIDA' })} />
+          <KpiCard icon={TrendingUp}
+            value={filtrosActivos ? encontradosPeriodo : encontrados}
+            label="Mascotas encontradas"
+            color="bg-emerald-500"
+            sub={filtrosActivos && filtroEspecie ? 'sin desglose por especie' : undefined}
+            onClick={() => openPanel('Mascotas encontradas', { tipo: 'ENCONTRADA' })} />
+          <KpiCard icon={CheckCircle}
+            value={resueltos}
+            label="Casos resueltos"
+            color="bg-indigo-500"
+            sub={filtrosActivos ? 'estado actual del sistema' : undefined}
+            onClick={() => openPanel('Casos resueltos', { estado: 'RESUELTO' })} />
         </div>
 
         {/* ── Indicadores derivados ─────────────────────────────────── */}
@@ -322,21 +463,25 @@ const AnalisisMascotasPage = () => {
               value={`${tasaResolucion}%`}
               sub={`${resueltos} de ${stats.total} reportes resueltos`}
               bar={tasaResolucion}
+              onClick={() => openPanel('Casos resueltos', { estado: 'RESUELTO' })}
             />
             <InsightCard
               label="Tasa de abandono"
               value={`${tasaAbandono}%`}
               sub={`${abandonados} reportes sin seguimiento`}
+              onClick={() => openPanel('Reportes abandonados', { estado: 'ABANDONADO' })}
             />
             <InsightCard
               label="Ratio pérdida / encontrada"
               value={ratioPE}
               sub={ratioPE !== '∞' ? (Number(ratioPE) > 1 ? 'Más reportes de pérdida' : 'Balance favorable') : 'Sin reportes encontradas'}
+              onClick={() => openPanel('Todos los reportes')}
             />
             <InsightCard
               label="Especie más reportada"
               value={especiePrincipal ? (especieLabel[especiePrincipal.especie] ?? especiePrincipal.especie) : '—'}
               sub={especiePrincipal ? `${especiePrincipal.count} reportes (${Math.round(especiePrincipal.count / stats.total * 100)}%)` : undefined}
+              onClick={especiePrincipal ? () => openPanel(`${especieLabel[especiePrincipal.especie] ?? especiePrincipal.especie}`, { especie: especiePrincipal.especie }) : undefined}
             />
           </div>
           <p className="text-xs text-slate-400 mt-3">
@@ -408,7 +553,8 @@ const AnalisisMascotasPage = () => {
 
         {/* Tipo por mes + Estado */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Perdidas vs Encontradas por mes">
+          <ChartCard title="Perdidas vs Encontradas por mes"
+            note={filtroEspecie ? 'El desglose por tipo no incluye dimensión de especie — el filtro de especie no aplica a esta vista' : undefined}>
             {tipoMesData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sin datos en el período seleccionado</p>
             ) : (
@@ -431,7 +577,8 @@ const AnalisisMascotasPage = () => {
             )}
           </ChartCard>
 
-          <ChartCard title="Distribución por especie">
+          <ChartCard title="Distribución por especie"
+            note={filtroTipo ? 'El desglose por especie no incluye dimensión de tipo — el filtro de tipo no aplica a esta vista' : undefined}>
             {especiePieData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sin datos</p>
             ) : (
@@ -471,7 +618,7 @@ const AnalisisMascotasPage = () => {
 
         {/* Tamaño + Ranking especie */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Distribución por tamaño">
+          <ChartCard title="Distribución por tamaño" note="Datos totales — no varía con filtros">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={tamanioData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -485,7 +632,8 @@ const AnalisisMascotasPage = () => {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Ranking de especies más reportadas">
+          <ChartCard title="Ranking de especies más reportadas"
+            note={filtroTipo ? 'El desglose por especie no incluye dimensión de tipo — el filtro de tipo no aplica a esta vista' : undefined}>
             {especiePieData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-8">Sin datos</p>
             ) : (
@@ -508,7 +656,9 @@ const AnalisisMascotasPage = () => {
 
         {/* Estado actual */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Estado actual del sistema</p>
+          <p className="text-sm font-semibold text-slate-700 mb-3">Estado actual del sistema
+            <span className="text-[10px] font-normal text-slate-400 ml-2 italic">· Snapshot global — no varía con filtros</span>
+          </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {stats.por_estado.map(e => (
               <div key={e.estado} className="border border-slate-100 bg-slate-50 rounded-xl px-4 py-3">
