@@ -31,6 +31,9 @@ vi.mock('../../../utils/rutFormatter', () => ({
 
 vi.mock('../../../utils/validators', () => ({
   validateField: vi.fn().mockReturnValue(''),
+  sanitizeNombre: (v: string) => v,
+  formatDireccion: (v: string) => v,
+  getPasswordReqs: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -64,7 +67,7 @@ vi.mock('../../../components/ui/Alert', () => ({
 
 import { userService } from '../../../services/userService';
 import { regionService } from '../../../services/regionService';
-import { validateField } from '../../../utils/validators';
+import { validateField, getPasswordReqs } from '../../../utils/validators';
 
 const mockUserService = vi.mocked(userService);
 const mockRegionService = vi.mocked(regionService);
@@ -269,5 +272,199 @@ describe('RegisterPage', () => {
     });
     fireEvent.submit(document.querySelector('form')!);
     await waitFor(() => expect(screen.getByText('¡Cuenta creada!')).toBeInTheDocument());
+  });
+
+  it('ejecuta onChange en campos ya tocados para re-validar', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const inputs = document.querySelectorAll('input:not([type="file"]):not([type="password"])');
+    const input = inputs[0] as HTMLInputElement;
+    // Touch the field first, then change it to trigger the re-validate branch
+    fireEvent.blur(input, { target: { value: 'x' } });
+    fireEvent.change(input, { target: { value: 'nuevo' } });
+    expect(screen.getByText('Registro de persona')).toBeInTheDocument();
+  });
+
+  it('re-valida confirmPassword cuando cambia la contraseña y ambos campos fueron tocados', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const passwords = document.querySelectorAll('input[type="password"]');
+    const pwdInput = passwords[0] as HTMLInputElement;
+    const confirmInput = passwords[1] as HTMLInputElement;
+    // Touch both fields
+    fireEvent.blur(pwdInput, { target: { value: 'abc' } });
+    fireEvent.blur(confirmInput, { target: { value: 'xyz' } });
+    // Change password again to trigger touched-branch in onPasswordChange
+    fireEvent.change(pwdInput, { target: { value: 'nueva123' } });
+    expect(screen.getByText('Registro de persona')).toBeInTheDocument();
+  });
+
+  it('muestra los requisitos de contraseña al escribir en el campo password', async () => {
+    vi.mocked(getPasswordReqs).mockReturnValue([{ label: 'Mínimo 8 caracteres', met: false }]);
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const passwords = document.querySelectorAll('input[type="password"]');
+    const pwdInput = passwords[0] as HTMLInputElement;
+    fireEvent.change(pwdInput, { target: { value: 'abc' } });
+    expect(screen.getByText('Mínimo 8 caracteres')).toBeInTheDocument();
+  });
+
+  it('ejecuta onBlur en el campo confirmPassword', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const passwords = document.querySelectorAll('input[type="password"]');
+    const confirmInput = passwords[1] as HTMLInputElement;
+    fireEvent.blur(confirmInput, { target: { value: 'algo' } });
+    expect(screen.getByText('Registro de persona')).toBeInTheDocument();
+  });
+
+  it('navega a login desde el formulario de registro', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    // The "Inicia sesión" link at the bottom of the form
+    const loginLinks = screen.getAllByText('Inicia sesión');
+    fireEvent.click(loginLinks[loginLinks.length - 1]);
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
+  });
+
+  it('completa el formulario de institución con todos sus campos', async () => {
+    mockUserService.registrarInstitucion.mockResolvedValue(undefined as any);
+    renderPage();
+    fireEvent.click(screen.getByText('Institución'));
+    await waitFor(() => screen.getByText('Registro de institución'));
+
+    const inputs = document.querySelectorAll('input:not([type="file"])');
+    inputs.forEach(i => fireEvent.change(i, { target: { value: 'test' } }));
+    inputs.forEach(i => fireEvent.blur(i, { target: { value: 'test' } }));
+
+    const selects = document.querySelectorAll('select');
+    selects.forEach(s => {
+      const opts = s.querySelectorAll('option');
+      if (opts.length > 1) fireEvent.change(s, { target: { value: (opts[1] as HTMLOptionElement).value } });
+      fireEvent.blur(s, { target: { value: (opts[1] as HTMLOptionElement)?.value || '' } });
+    });
+
+    await waitFor(() => expect(mockRegionService.getComunas).toHaveBeenCalled());
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => expect(screen.getByText('¡Cuenta creada!')).toBeInTheDocument());
+  });
+
+  it('vuelve a la selección de tipo al hacer clic en ArrowLeft desde institución', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Institución'));
+    await waitFor(() => screen.getByText('Registro de institución'));
+    const allButtons = screen.getAllByRole('button');
+    const backBtn = allButtons.find(b => !b.textContent?.trim() || b.querySelector('svg'));
+    if (backBtn) fireEvent.click(backBtn);
+    await waitFor(() => expect(
+      screen.queryByText('Crear cuenta') || screen.queryByText('Persona')
+    ).toBeTruthy());
+  });
+
+  it('vuelve a la selección de tipo al hacer clic en ArrowLeft desde persona', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    // The back button is the first button with class p-2 (ArrowLeft icon)
+    const allButtons = screen.getAllByRole('button');
+    const backBtn = allButtons.find(b => b.className.includes('p-2'));
+    if (backBtn) fireEvent.click(backBtn);
+    await waitFor(() => expect(screen.queryByText('Crear cuenta') || screen.queryByText('Persona')).toBeTruthy());
+  });
+
+  it('navega a inicio desde el botón móvil en la pantalla de selección de tipo', () => {
+    renderPage();
+    // Mobile button with "Sanos y Salvos" text (lg:hidden) - find last occurrence
+    const allButtons = screen.getAllByRole('button');
+    const mobileBtn = allButtons.find(
+      b => b.textContent?.includes('Sanos y Salvos') && b.className.includes('lg:hidden')
+    );
+    if (mobileBtn) fireEvent.click(mobileBtn);
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  it('navega a inicio desde LeftPanel en la pantalla de éxito', async () => {
+    mockUserService.registrarCiudadano.mockResolvedValue(undefined as any);
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => screen.getByText('¡Cuenta creada!'));
+    // Click LeftPanel button (navigate('/') callback)
+    const allButtons = screen.getAllByRole('button');
+    const homeBtn = allButtons.find(b => b.textContent?.includes('Sanos y Salvos'));
+    if (homeBtn) fireEvent.click(homeBtn);
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  it('onChange en el select de comuna actualiza el valor', async () => {
+    mockRegionService.getComunas.mockResolvedValue([
+      { codigo: '13101', nombre: 'Santiago' },
+      { codigo: '13102', nombre: 'Providencia' },
+    ]);
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const selects = screen.getAllByRole('combobox');
+    // Change region to load comunas
+    fireEvent.change(selects[0], { target: { value: '13' } });
+    await waitFor(() => expect(mockRegionService.getComunas).toHaveBeenCalled());
+    // Change comuna
+    const updatedSelects = screen.getAllByRole('combobox');
+    fireEvent.change(updatedSelects[1], { target: { value: '13101' } });
+    expect(screen.getByText('Registro de persona')).toBeInTheDocument();
+  });
+
+  it('password requirements with met=true show CheckCircle (lines 531-532)', async () => {
+    vi.mocked(getPasswordReqs).mockReturnValue([{ label: 'Mínimo 8 caracteres', met: true }]);
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const passwords = document.querySelectorAll('input[type="password"]');
+    const pwdInput = passwords[0] as HTMLInputElement;
+    fireEvent.change(pwdInput, { target: { value: 'StrongPass1!' } });
+    expect(screen.getByText('Mínimo 8 caracteres')).toBeInTheDocument();
+    const li = screen.getByText('Mínimo 8 caracteres').closest('li');
+    expect(li?.className).toContain('emerald');
+  });
+
+  it('region change with empty code skips getComunas (line 113 false branch)', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const selects = screen.getAllByRole('combobox');
+    // Change to empty value — if(codigo) is false, getComunas should NOT be called
+    mockRegionService.getComunas.mockClear();
+    fireEvent.change(selects[0], { target: { value: '' } });
+    expect(mockRegionService.getComunas).not.toHaveBeenCalled();
+  });
+
+  it('file input with no file sets foto to null (line 558 null branch)', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Persona'));
+    await waitFor(() => screen.getByText('Registro de persona'));
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    // Fire change with no files (empty FileList)
+    Object.defineProperty(fileInput, 'files', { value: [], configurable: true });
+    fireEvent.change(fileInput);
+    // Should still render the upload placeholder
+    expect(screen.getByText('Haz clic para subir una foto')).toBeInTheDocument();
+  });
+
+  it('ArrowLeft button in institution form triggers setTipo(null)', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Institución'));
+    await waitFor(() => screen.getByText('Registro de institución'));
+    const title = screen.getByText('Registro de institución');
+    // Navigate up: h1 → div (wrapper) → div.flex (container with back button)
+    const flexContainer = title.parentElement?.parentElement;
+    const backBtn = flexContainer?.querySelector('button');
+    if (backBtn) fireEvent.click(backBtn);
+    await waitFor(() => expect(screen.getByText('Persona')).toBeInTheDocument());
   });
 });

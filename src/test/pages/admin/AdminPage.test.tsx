@@ -63,8 +63,13 @@ vi.mock('recharts', () => ({
   PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
   Pie: () => <div />,
   Cell: () => <div />,
-  Tooltip: () => <div />,
-  Legend: () => <div />,
+  Tooltip: ({ content: Content }: any) => {
+    if (!Content) return <div />;
+    const Comp = Content?.type ?? Content;
+    return typeof Comp === 'function' ? <Comp active={true} payload={[{ name: 'Test', value: 42 }]} /> : <div />;
+  },
+  Legend: ({ formatter }: any) =>
+    formatter ? <span data-testid="legend-label">{formatter('TestLabel')}</span> : <div />,
   BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
   Bar: () => <div />,
   XAxis: () => <div />,
@@ -136,9 +141,9 @@ describe('AdminPage', () => {
 
   it('renders section headers', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText(/Usuarios/)).toBeInTheDocument());
-    expect(screen.getByText(/Soporte/)).toBeInTheDocument();
-    expect(screen.getByText(/Reportes de mascotas/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByText(/Usuarios/).length).toBeGreaterThan(0));
+    expect(screen.getAllByText(/Soporte/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Reportes de mascotas/).length).toBeGreaterThan(0);
   });
 
   it('shows refresh button', async () => {

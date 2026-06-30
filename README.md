@@ -40,6 +40,8 @@ npm run lint
 
 # Tests (Vitest)
 npm run test:run
+
+npx vitest run --coverage
 ```
 
 ---

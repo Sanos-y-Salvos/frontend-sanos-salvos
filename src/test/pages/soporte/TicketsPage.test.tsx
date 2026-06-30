@@ -280,6 +280,30 @@ describe('TicketsPage', () => {
     await waitFor(() => screen.getByText('No hay comentarios aún'));
   });
 
+  it('sending empty comment does nothing (line 60)', async () => {
+    mockTicketService.misTickets.mockResolvedValue([mockTickets[0]] as any);
+    mockTicketService.verTicket.mockResolvedValue(mockTickets[0] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('No puedo iniciar sesión'));
+    fireEvent.click(screen.getAllByText('No puedo iniciar sesión')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a mis tickets'));
+    fireEvent.click(screen.getByText('Agregar comentario'));
+    expect(mockTicketService.agregarComentario).not.toHaveBeenCalled();
+  });
+
+  it('ticket with 2+ comments shows plural "comentarios" (line 317)', async () => {
+    const ticketWith2Comments = {
+      ...mockTickets[0],
+      comentarios: [
+        { id: 'c1', tipo_autor: 'administrador', contenido: 'Resp1', created_at: '2025-01-01T11:00:00Z' },
+        { id: 'c2', tipo_autor: 'usuario', contenido: 'Resp2', created_at: '2025-01-01T12:00:00Z' },
+      ],
+    };
+    mockTicketService.misTickets.mockResolvedValue([ticketWith2Comments] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('2 comentarios')).toBeInTheDocument());
+  });
+
   it('detail view: shows user comment as Tú', async () => {
     const ticketWithUserComment = {
       ...mockTickets[0],

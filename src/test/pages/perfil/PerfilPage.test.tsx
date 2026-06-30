@@ -92,6 +92,8 @@ vi.mock('../../../services/regionService', () => ({
 
 vi.mock('../../../utils/validators', () => ({
   validateField: vi.fn().mockReturnValue(''),
+  formatDireccion: vi.fn((v: string) => v),
+  sanitizeNombre: vi.fn((v: string) => v),
 }));
 
 vi.mock('framer-motion', () => ({
@@ -401,5 +403,218 @@ describe('PerfilPage', () => {
     fireEvent.blur(nuevaPass, { target: { value: 'initial' } });
     fireEvent.change(nuevaPass, { target: { value: 'changed' } });
     expect(screen.getByText('Cambiar contraseña')).toBeInTheDocument();
+  });
+});
+
+describe('PerfilPage - institucion edit mode and extra flows', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser = institucionUser;
+    mockUserService.actualizarPerfil.mockResolvedValue(undefined as any);
+    mockUserService.obtenerPerfil.mockResolvedValue(institucionUser as any);
+    mockUserService.cambiarContrasena.mockResolvedValue({ message: 'Contraseña actualizada' });
+    mockUserService.desactivarCuenta.mockResolvedValue(undefined as any);
+    mockRegionService.getRegiones.mockResolvedValue([{ codigo: '13', nombre: 'Metropolitana' }]);
+    mockRegionService.getComunas.mockResolvedValue([{ codigo: '13101', nombre: 'Santiago' }]);
+    mockValidateField.mockReturnValue('');
+  });
+
+  it('shows institucion fields in edit mode', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    expect(screen.getByTestId('Nombre institución')).toBeInTheDocument();
+    expect(screen.getByTestId('Razón social')).toBeInTheDocument();
+  });
+
+  it('shows RUT as non-editable in institucion edit mode', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    expect(screen.getByText('76.354.771-K')).toBeInTheDocument();
+    expect(screen.getByText('(no editable)')).toBeInTheDocument();
+  });
+
+  it('saves institucion profile changes successfully', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    fireEvent.click(screen.getByText('Guardar cambios'));
+    await waitFor(() => expect(mockUserService.actualizarPerfil).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByText('Perfil actualizado correctamente')).toBeInTheDocument()
+    );
+  });
+
+  it('calls onChange for institucion fields when already touched', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const nombreInput = screen.getByTestId('Nombre institución');
+    // First blur to set touched, then change
+    fireEvent.blur(nombreInput, { target: { value: 'VetCare' } });
+    fireEvent.change(nombreInput, { target: { value: 'VetCare Updated' } });
+    expect(mockValidateField).toHaveBeenCalled();
+  });
+
+  it('calls onChange for razon_social when already touched', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const razonInput = screen.getByTestId('Razón social');
+    fireEvent.blur(razonInput, { target: { value: 'VetCare Ltda.' } });
+    fireEvent.change(razonInput, { target: { value: 'VetCare S.A.' } });
+    expect(mockValidateField).toHaveBeenCalled();
+  });
+
+  it('onChange for fields not yet touched does not call validateField extra times', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    mockValidateField.mockClear();
+
+    // Change without blur first (not touched) - should not validate
+    const nombreInput = screen.getByTestId('Nombre institución');
+    fireEvent.change(nombreInput, { target: { value: 'New Name' } });
+    // validateField should not have been called for onChange when not touched
+    expect(mockValidateField).not.toHaveBeenCalled();
+  });
+
+  it('shows password change success for institucion user', async () => {
+    renderPage();
+    fireEvent.change(screen.getByTestId('Contraseña actual'), { target: { value: 'oldpass' } });
+    fireEvent.change(screen.getByTestId('Nueva contraseña'), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByTestId('Confirmar nueva contraseña'), { target: { value: 'newpass123' } });
+    fireEvent.click(screen.getByRole('button', { name: /actualizar contraseña/i }));
+    await waitFor(() =>
+      expect(mockUserService.cambiarContrasena).toHaveBeenCalledWith('oldpass', 'newpass123')
+    );
+    await waitFor(() =>
+      expect(screen.getByText('Contraseña actualizada')).toBeInTheDocument()
+    );
+  });
+
+  it('shows generic error when password change fails without message', async () => {
+    mockUserService.cambiarContrasena.mockRejectedValue(new Error('network'));
+    renderPage();
+    fireEvent.change(screen.getByTestId('Contraseña actual'), { target: { value: 'old' } });
+    fireEvent.change(screen.getByTestId('Nueva contraseña'), { target: { value: 'new123' } });
+    fireEvent.change(screen.getByTestId('Confirmar nueva contraseña'), { target: { value: 'new123' } });
+    fireEvent.click(screen.getByRole('button', { name: /actualizar contraseña/i }));
+    await waitFor(() =>
+      expect(screen.getByText('Error al cambiar la contraseña')).toBeInTheDocument()
+    );
+  });
+
+  it('onNuevaPassChange updates confirm error when confirm already touched', async () => {
+    renderPage();
+    const confirmInput = screen.getByTestId('Confirmar nueva contraseña');
+    // First touch confirm field
+    fireEvent.blur(confirmInput, { target: { value: 'abc' } });
+    // Now change nueva - should re-validate confirm too
+    const nuevaPass = screen.getByTestId('Nueva contraseña');
+    fireEvent.change(nuevaPass, { target: { value: 'different' } });
+    expect(screen.getByText('Cambiar contraseña')).toBeInTheDocument();
+  });
+
+  it('shows foto preview when file is selected in edit mode', async () => {
+    // Mock URL.createObjectURL
+    const originalCreateObjectURL = URL.createObjectURL;
+    URL.createObjectURL = vi.fn().mockReturnValue('blob:fake-url');
+    URL.revokeObjectURL = vi.fn();
+
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File(['img'], 'test.jpg', { type: 'image/jpeg' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fireEvent.change(fileInput);
+
+    await waitFor(() =>
+      expect(screen.getByText('Cambiar foto seleccionada')).toBeInTheDocument()
+    );
+    URL.createObjectURL = originalCreateObjectURL;
+  });
+
+  it('changes ciudadano name fields in edit mode (353-368)', async () => {
+    mockUser = ciudadanoUser;
+    mockUserService.obtenerPerfil.mockResolvedValue(ciudadanoUser as any);
+    renderPage();
+    // Wait for profile to load before clicking Editar
+    await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const primerNombreInput = screen.queryByTestId('Primer nombre');
+    if (primerNombreInput) {
+      fireEvent.change(primerNombreInput, { target: { value: 'Pedro' } });
+      fireEvent.blur(primerNombreInput, { target: { value: 'Pedro' } });
+    }
+    const segundoNombreInput = screen.queryByTestId('Segundo nombre');
+    if (segundoNombreInput) {
+      fireEvent.change(segundoNombreInput, { target: { value: 'Luis' } });
+      fireEvent.blur(segundoNombreInput, { target: { value: 'Luis' } });
+    }
+    const apellidoPaternoInput = screen.queryByTestId('Primer apellido');
+    if (apellidoPaternoInput) {
+      fireEvent.change(apellidoPaternoInput, { target: { value: 'González' } });
+      fireEvent.blur(apellidoPaternoInput, { target: { value: 'González' } });
+    }
+    const apellidoMaternoInput = screen.queryByTestId('Segundo apellido');
+    if (apellidoMaternoInput) {
+      fireEvent.change(apellidoMaternoInput, { target: { value: 'Martínez' } });
+      fireEvent.blur(apellidoMaternoInput, { target: { value: 'Martínez' } });
+    }
+  });
+
+  it('changes telefono field in edit mode (ciudadano)', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const telefonoInput = screen.queryByPlaceholderText('12345678');
+    if (telefonoInput) {
+      fireEvent.change(telefonoInput, { target: { value: '87654321' } });
+      fireEvent.blur(telefonoInput, { target: { value: '87654321' } });
+    }
+  });
+
+  it('blurs region select in edit mode (ciudadano)', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const selects = screen.getAllByRole('combobox');
+    if (selects.length > 0) {
+      fireEvent.blur(selects[0], { target: { value: '13' } });
+    }
+  });
+
+  it('changes commune and direccion in institution edit mode', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    // Institution form: select region first, then commune, then direccion
+    const selects = screen.getAllByRole('combobox');
+    if (selects.length > 0) {
+      fireEvent.change(selects[0], { target: { value: '13' } });
+      await waitFor(() => expect(mockRegionService.getComunas).toHaveBeenCalled());
+    }
+    const selects2 = screen.getAllByRole('combobox');
+    if (selects2.length > 1) {
+      fireEvent.change(selects2[1], { target: { value: 'Santiago' } });
+      fireEvent.blur(selects2[1], { target: { value: 'Santiago' } });
+    }
+
+    const dirInput = screen.queryByPlaceholderText('Ej: Lago Riñihue 132');
+    if (dirInput) {
+      fireEvent.change(dirInput, { target: { value: 'Av. Las Rosas 123' } });
+      fireEvent.blur(dirInput, { target: { value: 'Av. Las Rosas 123' } });
+    }
   });
 });

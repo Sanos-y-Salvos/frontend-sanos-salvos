@@ -56,8 +56,8 @@ describe('LoginPage', () => {
   it('navigates home when logo is clicked', () => {
     renderLogin();
     const homeButtons = screen.getAllByRole('button');
-    const logoButton = homeButtons.find(b => b.textContent?.includes('Sanos y Salvos'));
-    fireEvent.click(logoButton!);
+    const logoButtons = homeButtons.filter(b => b.textContent?.includes('Sanos y Salvos'));
+    logoButtons.forEach(btn => fireEvent.click(btn));
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 

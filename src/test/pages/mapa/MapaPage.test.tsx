@@ -1,8 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import MapaPage from '../../../pages/mapa/MapaPage'
+
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return { ...actual, useNavigate: () => mockNavigate }
+})
 
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children }: { children: React.ReactNode }) => (
@@ -26,7 +32,21 @@ vi.mock('react-leaflet', () => ({
     <div data-testid="popup">{children}</div>
   ),
   useMap: () => ({ setView: vi.fn() }),
-  divIcon: ({ className }: { className: string }) => ({ options: { className } }),
+  divIcon: ({ className, html }: { className: string; html?: string }) => ({
+    options: {
+      className: html?.includes('f43f5e') ? 'rojo' : html?.includes('10b981') ? 'verde' : className,
+    },
+  }),
+}))
+
+vi.mock('leaflet', () => ({
+  default: {
+    divIcon: ({ className, html }: { className: string; html?: string }) => ({
+      options: {
+        className: html?.includes('f43f5e') ? 'rojo' : html?.includes('10b981') ? 'verde' : className,
+      },
+    }),
+  },
 }))
 
 vi.mock('../../../services/localizacionService', () => ({
@@ -256,7 +276,8 @@ describe('MapaPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('panel-detalle')).toBeInTheDocument()
     })
-    await userEvent.click(screen.getByRole('button', { name: '✕' }))
+    const panel = screen.getByTestId('panel-detalle')
+    await userEvent.click(within(panel).getAllByRole('button')[0])
     await waitFor(() => {
       expect(screen.queryByTestId('panel-detalle')).not.toBeInTheDocument()
     })
@@ -289,6 +310,85 @@ describe('MapaPage', () => {
     await userEvent.click(screen.getAllByTestId('marcador')[0])
     await waitFor(() => {
       expect(screen.getByTestId('panel-detalle')).toHaveTextContent('PERRO')
+    })
+  })
+
+  it('navega al reporte completo al hacer clic en el botón del panel', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => screen.getByTestId('panel-detalle'))
+    await userEvent.click(screen.getByRole('button', { name: /ver reporte completo/i }))
+    expect(mockNavigate).toHaveBeenCalledWith('/reportes/reporte-uuid-1')
+  })
+
+  it('usa coordenadas por defecto cuando la geolocalización falla', async () => {
+    Object.defineProperty(global.navigator, 'geolocation', {
+      value: {
+        getCurrentPosition: vi.fn((_success, error) => error(new Error('denied'))),
+      },
+      configurable: true,
+    })
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => {
+      expect(vi.mocked(obtenerPuntosCercanos)).toHaveBeenCalled()
+    })
+  })
+
+  it('usa nombre alternativo "Mascota" cuando nombre_mascota es null en foto alt', async () => {
+    const puntoSinNombre = [{ ...mockPuntos[0], nombre_mascota: null, foto_url: '/uploads/f.jpg' }]
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(puntoSinNombre)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('Sin nombre')
+    })
+  })
+
+  it('usa VITE_MS_MASCOTAS_URL de env cuando está definida', async () => {
+    vi.stubEnv('VITE_MS_MASCOTAS_URL', 'http://custom-server:4000')
+    const puntoConFoto = [{ ...mockPuntos[0], foto_url: '/uploads/foto1.jpg' }]
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(puntoConFoto)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      const img = screen.getByRole('img')
+      expect(img).toHaveAttribute('src', 'http://custom-server:4000/uploads/foto1.jpg')
+    })
+    vi.unstubAllEnvs()
+  })
+
+  it('muestra "Sin foto" cuando el marcador seleccionado no tiene foto', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(mockPuntos)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    // Click second marker (uuid-2 has foto_url: null)
+    await userEvent.click(screen.getAllByTestId('marcador')[1])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('Sin foto')
+    })
+  })
+
+  it('muestra texto en singular con exactamente 1 reporte activo', async () => {
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue([mockPuntos[0]])
+    renderConRouter()
+    await waitFor(() => {
+      expect(screen.getByText(/1 reporte activo/i)).toBeInTheDocument()
+    })
+  })
+
+  it('muestra código chip cuando el punto tiene código chip', async () => {
+    const puntoConChip = [{ ...mockPuntos[0], codigo_chip: 'CHIP-123' }]
+    vi.mocked(obtenerPuntosCercanos).mockResolvedValue(puntoConChip)
+    renderConRouter()
+    await waitFor(() => screen.getAllByTestId('marcador'))
+    await userEvent.click(screen.getAllByTestId('marcador')[0])
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-detalle')).toHaveTextContent('CHIP-123')
     })
   })
 

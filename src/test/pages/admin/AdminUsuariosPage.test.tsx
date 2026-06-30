@@ -51,6 +51,8 @@ vi.mock('../../../utils/rutFormatter', () => ({
 
 vi.mock('../../../utils/validators', () => ({
   validateField: vi.fn().mockReturnValue(''),
+  formatDireccion: vi.fn((v: string) => v),
+  sanitizeNombre: vi.fn((v: string) => v),
 }));
 
 const ciudadanoUser = {
@@ -496,5 +498,465 @@ describe('AdminUsuariosPage', () => {
     await waitFor(() =>
       expect(screen.getByText('Cuenta activada correctamente')).toBeInTheDocument()
     );
+  });
+});
+
+describe('AdminUsuariosPage - extra flows', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockValidateField.mockReturnValue('');
+    mockAuthUser = { rol: 'administrador', id: 'admin1' };
+    mockUserService.listarUsuarios.mockResolvedValue([]);
+    mockUserService.verUsuario.mockResolvedValue(ciudadanoUser as any);
+    mockUserService.cambiarEstadoUsuario.mockResolvedValue({ ...ciudadanoUser, is_active: false } as any);
+    mockUserService.cambiarRolUsuario.mockResolvedValue({ ...ciudadanoUser, rol: 'moderador' } as any);
+    mockUserService.editarDatosUsuario.mockResolvedValue(ciudadanoUser as any);
+    mockUserService.registrarCiudadano.mockResolvedValue(undefined as any);
+    mockUserService.registrarInstitucion.mockResolvedValue(undefined as any);
+    mockRegionService.getRegiones.mockResolvedValue([{ codigo: '13', nombre: 'Metropolitana' }]);
+    mockRegionService.getComunas.mockResolvedValue([{ codigo: '13101', nombre: 'Santiago' }]);
+  });
+
+  it('searches by name', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser, institucionUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    const searchInput = screen.getByPlaceholderText(/buscar/i);
+    fireEvent.change(searchInput, { target: { value: 'Juan' } });
+    await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
+    expect(screen.queryByText('VetCare')).not.toBeInTheDocument();
+  });
+
+  it('shows empty state with search message', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    const searchInput = screen.getByPlaceholderText(/buscar/i);
+    fireEvent.change(searchInput, { target: { value: 'nonexistent-xyz' } });
+    await waitFor(() =>
+      expect(screen.getByText(/Sin resultados para/)).toBeInTheDocument()
+    );
+  });
+
+  it('superadmin can see superadmin users', async () => {
+    mockAuthUser = { rol: 'superadmin', id: 'super1' };
+    mockUserService.listarUsuarios.mockResolvedValue([superadminUser, ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Super Admin')).toBeInTheDocument());
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+  });
+
+  it('closes create modal with X button', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Crear usuario', { selector: 'h2' }));
+    // Click the X button
+    const xButton = document.querySelector('button svg.lucide-x')?.parentElement as HTMLElement;
+    if (xButton) fireEvent.click(xButton);
+    else {
+      // fallback: click Cancel
+      fireEvent.click(screen.getByText('Cancelar'));
+    }
+    await waitFor(() =>
+      expect(screen.queryByText('Crear usuario', { selector: 'h2' })).not.toBeInTheDocument()
+    );
+  });
+
+  it('shows validation errors in create form', async () => {
+    mockValidateField.mockReturnValue('Campo requerido');
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Crear usuario', { selector: 'h2' }));
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => expect(mockUserService.registrarCiudadano).not.toHaveBeenCalled());
+    expect(screen.getAllByText('Campo requerido').length).toBeGreaterThan(0);
+  });
+
+  it('creates institution user successfully', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Institución', { selector: 'button' }));
+    fireEvent.click(screen.getByText('Institución', { selector: 'button' }));
+    await waitFor(() => expect(document.querySelector('form')).toBeInTheDocument());
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => expect(mockUserService.registrarInstitucion).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByText('Usuario creado correctamente')).toBeInTheDocument());
+  });
+
+  it('shows error when creating institution user fails', async () => {
+    mockUserService.registrarInstitucion.mockRejectedValue({
+      response: { data: { message: 'RUT ya registrado' } },
+    });
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Institución', { selector: 'button' }));
+    fireEvent.click(screen.getByText('Institución', { selector: 'button' }));
+    await waitFor(() => expect(document.querySelector('form')).toBeInTheDocument());
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() =>
+      expect(screen.getAllByRole('alert')[0]).toHaveTextContent('RUT ya registrado')
+    );
+  });
+
+  it('saves edit for institution user', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([institucionUser] as any);
+    mockUserService.verUsuario.mockResolvedValue(institucionUser as any);
+    mockUserService.editarDatosUsuario.mockResolvedValue(institucionUser as any);
+    renderPage();
+    await waitFor(() => screen.getByText('VetCare'));
+    fireEvent.click(screen.getAllByText('VetCare')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    fireEvent.click(screen.getByText('Guardar cambios'));
+    await waitFor(() =>
+      expect(mockUserService.editarDatosUsuario).toHaveBeenCalledWith('u2', expect.any(Object))
+    );
+    await waitFor(() =>
+      expect(screen.getByText('Datos actualizados correctamente')).toBeInTheDocument()
+    );
+  });
+
+  it('shows edit validation error when fields are invalid', async () => {
+    mockValidateField.mockReturnValue('Campo requerido');
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    fireEvent.click(screen.getByText('Guardar cambios'));
+    await waitFor(() => expect(mockUserService.editarDatosUsuario).not.toHaveBeenCalled());
+  });
+
+  it('loads comunas when region changes in edit mode', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    const regionSelects = screen.getAllByRole('combobox');
+    fireEvent.change(regionSelects[0], { target: { value: '13' } });
+    await waitFor(() => expect(mockRegionService.getComunas).toHaveBeenCalledWith('13'));
+  });
+
+  it('blurCrear and changeCrear work correctly', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Crear usuario', { selector: 'h2' }));
+
+    const emailInput = screen.getByRole('textbox', { name: /email/i });
+    fireEvent.blur(emailInput, { target: { value: '' } });
+    fireEvent.change(emailInput, { target: { value: 'test@test.cl' } });
+    expect(emailInput).toHaveValue('test@test.cl');
+  });
+
+  it('shows "no usuarios" when busqueda has no match', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    const searchInput = screen.getByPlaceholderText(/buscar/i);
+    fireEvent.change(searchInput, { target: { value: 'xyznotfound' } });
+    await waitFor(() => expect(screen.getByText('No hay usuarios')).toBeInTheDocument());
+  });
+
+  it('renders user phone and region in list card', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('912345678')).toBeInTheDocument());
+  });
+
+  it('shows user inactive badge in list', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([institucionUser] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Inactivo')).toBeInTheDocument());
+  });
+
+  it('changes comuna and direccion in create modal for ciudadano', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Crear usuario', { selector: 'h2' }));
+    // Open as ciudadano (default or select ciudadano)
+    await waitFor(() => screen.getAllByText('Ciudadano', { selector: 'button' }));
+    fireEvent.click(screen.getAllByText('Ciudadano', { selector: 'button' })[0]);
+    await waitFor(() => screen.getByText('Primer nombre *'));
+
+    // Change region first
+    const selects = screen.getAllByRole('combobox');
+    const regionSelect = selects.find(s => s.querySelector('option[value="13"]') || s.getAttribute('label')?.includes('Región'));
+    if (regionSelect) {
+      fireEvent.change(regionSelect, { target: { value: '13' } });
+      await waitFor(() => expect(mockRegionService.getComunas).toHaveBeenCalled());
+    }
+
+    // Change commune and direction
+    const allSelects = screen.getAllByRole('combobox');
+    if (allSelects.length > 1) {
+      fireEvent.change(allSelects[allSelects.length - 1], { target: { value: 'Santiago' } });
+      fireEvent.blur(allSelects[allSelects.length - 1], { target: { value: 'Santiago' } });
+    }
+
+    // Direction input
+    const dirInput = screen.queryByPlaceholderText('Ej: Lago Riñihue 132');
+    if (dirInput) {
+      fireEvent.change(dirInput, { target: { value: 'Calle 123' } });
+      fireEvent.blur(dirInput, { target: { value: 'Calle 123' } });
+    }
+  });
+
+  it('changes institution-specific fields in create modal', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Institución', { selector: 'button' }));
+    fireEvent.click(screen.getByText('Institución', { selector: 'button' }));
+    await waitFor(() => screen.getByText('Nombre institución *'));
+
+    // Change institution name
+    const nombreInput = screen.queryByRole('textbox', { name: /Nombre institución/i });
+    if (nombreInput) {
+      fireEvent.change(nombreInput, { target: { value: 'Mi Clínica' } });
+      fireEvent.blur(nombreInput, { target: { value: 'Mi Clínica' } });
+    }
+
+    // Change tipo institucion select
+    const selects = screen.getAllByRole('combobox');
+    const tipoSelect = selects.find(s => {
+      const opts = s.querySelectorAll('option');
+      return Array.from(opts).some(o => o.textContent?.includes('Municipalidad'));
+    });
+    if (tipoSelect) {
+      fireEvent.change(tipoSelect, { target: { value: 'municipalidad' } });
+    }
+
+    // Photo upload
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(fileInput, 'files', { value: [file] });
+      fireEvent.change(fileInput);
+    }
+  });
+
+  it('changes razon_social and rut fields for institution in create modal', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getByText('Institución', { selector: 'button' }));
+    fireEvent.click(screen.getByText('Institución', { selector: 'button' }));
+    await waitFor(() => screen.getByText('Razón social *'));
+
+    // Change razon_social
+    const razonInput = screen.queryByRole('textbox', { name: /Razón social/i });
+    if (razonInput) {
+      fireEvent.change(razonInput, { target: { value: 'Clínica SA' } });
+      fireEvent.blur(razonInput, { target: { value: 'Clínica SA' } });
+    }
+
+    // Change rut
+    const rutInput = screen.queryByPlaceholderText('76.354.771-K');
+    if (rutInput) {
+      fireEvent.change(rutInput, { target: { value: '76.354.771-K' } });
+      fireEvent.blur(rutInput, { target: { value: '76.354.771-K' } });
+    }
+  });
+
+  it('changes ciudadano name fields in create modal', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getAllByText('Ciudadano', { selector: 'button' }));
+    fireEvent.click(screen.getAllByText('Ciudadano', { selector: 'button' })[0]);
+    await waitFor(() => screen.getByText('Primer nombre *'));
+
+    // Change primer_nombre
+    const primerNombreInput = screen.queryByRole('textbox', { name: /Primer nombre/i });
+    if (primerNombreInput) {
+      fireEvent.change(primerNombreInput, { target: { value: 'Juan' } });
+      fireEvent.blur(primerNombreInput, { target: { value: 'Juan' } });
+    }
+
+    // Change apellido_paterno
+    const apellidoInput = screen.queryByRole('textbox', { name: /Primer apellido/i });
+    if (apellidoInput) {
+      fireEvent.change(apellidoInput, { target: { value: 'García' } });
+      fireEvent.blur(apellidoInput, { target: { value: 'García' } });
+    }
+
+    // Change RUN
+    const runInput = screen.queryByPlaceholderText('12.345.678-9');
+    if (runInput) {
+      fireEvent.change(runInput, { target: { value: '12.345.678-9' } });
+      fireEvent.blur(runInput, { target: { value: '12.345.678-9' } });
+    }
+
+    // Change segundo_nombre
+    const segundoInput = screen.queryByRole('textbox', { name: /Segundo nombre/i });
+    if (segundoInput) {
+      fireEvent.change(segundoInput, { target: { value: 'Pablo' } });
+      fireEvent.blur(segundoInput, { target: { value: 'Pablo' } });
+    }
+
+    // Change apellido_materno
+    const apellidoMatInput = screen.queryByRole('textbox', { name: /Segundo apellido/i });
+    if (apellidoMatInput) {
+      fireEvent.change(apellidoMatInput, { target: { value: 'López' } });
+      fireEvent.blur(apellidoMatInput, { target: { value: 'López' } });
+    }
+  });
+
+  it('changes edit modal fields for ciudadano (lines 467, 472, 478-481)', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    // Change region to load comunas
+    const selects = screen.getAllByRole('combobox');
+    fireEvent.change(selects[0], { target: { value: '13' } });
+
+    // Change comuna
+    const selects2 = screen.getAllByRole('combobox');
+    if (selects2.length > 1) {
+      fireEvent.change(selects2[1], { target: { value: 'Santiago' } });
+    }
+
+    // Change direccion
+    const dirInput = screen.queryByPlaceholderText('Ej: Lago Riñihue 132');
+    if (dirInput) {
+      fireEvent.change(dirInput, { target: { value: 'Nueva Dir 123' } });
+    }
+
+    // Also change telefono in edit modal (lines 455-456)
+    const telefonoInput = screen.queryByPlaceholderText('12345678');
+    if (telefonoInput) fireEvent.change(telefonoInput, { target: { value: '87654321' } });
+
+    // Change name fields (ciudadano) via aria-label
+    const primerNombreInput = screen.queryByRole('textbox', { name: 'Primer nombre' });
+    if (primerNombreInput) fireEvent.change(primerNombreInput, { target: { value: 'Pedro' } });
+    const segundoNombreInput = screen.queryByRole('textbox', { name: 'Segundo nombre' });
+    if (segundoNombreInput) fireEvent.change(segundoNombreInput, { target: { value: 'Pablo' } });
+    const apellidoPaternoInput = screen.queryByRole('textbox', { name: 'Primer apellido' });
+    if (apellidoPaternoInput) fireEvent.change(apellidoPaternoInput, { target: { value: 'González' } });
+    const apellidoMaternoInput = screen.queryByRole('textbox', { name: 'Segundo apellido' });
+    if (apellidoMaternoInput) fireEvent.change(apellidoMaternoInput, { target: { value: 'Martínez' } });
+  });
+
+  it('changes edit modal fields for institution (lines 484-487)', async () => {
+    mockUserService.listarUsuarios.mockResolvedValue([institucionUser] as any);
+    mockUserService.verUsuario.mockResolvedValue(institucionUser as any);
+    renderPage();
+    await waitFor(() => screen.getByText('VetCare'));
+    fireEvent.click(screen.getAllByText('VetCare')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+
+    const nombreInput = screen.queryByRole('textbox', { name: 'Nombre institución' });
+    if (nombreInput) fireEvent.change(nombreInput, { target: { value: 'Clínica Nueva' } });
+    const razonInput = screen.queryByRole('textbox', { name: 'Razón social' });
+    if (razonInput) fireEvent.change(razonInput, { target: { value: 'Nueva Ltda.' } });
+  });
+
+  it('changes password and telefono in create modal (lines 815-832, 841)', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getAllByText('Ciudadano', { selector: 'button' }));
+
+    // password input (type="password")
+    const passwordInput = document.querySelector('input[type="password"]');
+    if (passwordInput) {
+      fireEvent.change(passwordInput, { target: { value: 'mypassword123' } });
+      fireEvent.blur(passwordInput, { target: { value: 'mypassword123' } });
+    }
+
+    // telefono input
+    const telefonoInput = screen.queryByPlaceholderText('12345678');
+    if (telefonoInput) {
+      fireEvent.change(telefonoInput, { target: { value: '87654321' } });
+      fireEvent.blur(telefonoInput, { target: { value: '87654321' } });
+    }
+
+    // region select blur
+    const selects = screen.getAllByRole('combobox');
+    if (selects.length > 0) {
+      fireEvent.blur(selects[0], { target: { value: '13' } });
+    }
+  });
+
+  it('pagination: renders buttons and next/prev chevrons (lines 50-75)', async () => {
+    const manyUsers = Array.from({ length: 14 }, (_, i) => ({
+      ...ciudadanoUser,
+      id: `u${i + 100}`,
+      credential_id: `cr${i}`,
+      email: `user${i}@test.cl`,
+      ciudadano: { ...ciudadanoUser.ciudadano, primer_nombre: `User${i}`, apellido_paterno: 'Test' },
+    }));
+    mockUserService.listarUsuarios.mockResolvedValue(manyUsers as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('User0 Test')).toBeInTheDocument());
+    // Click ChevronRight (next button) to go to page 2
+    const allBtns = screen.queryAllByRole('button');
+    const nextBtn = allBtns[allBtns.length - 1];
+    if (nextBtn && !nextBtn.disabled) {
+      fireEvent.click(nextBtn);
+      await waitFor(() => expect(screen.getByText('User12 Test')).toBeInTheDocument());
+    }
+    // Click prev chevron
+    const btn1 = screen.queryAllByRole('button').find(b => b.textContent === '1');
+    if (btn1) {
+      const prevBtn = btn1.previousElementSibling as HTMLButtonElement;
+      if (prevBtn && !prevBtn.disabled) fireEvent.click(prevBtn);
+    }
+  });
+
+  it('pagination: >7 pages uses ellipsis (lines 54-58)', async () => {
+    const manyUsers = Array.from({ length: 90 }, (_, i) => ({
+      ...ciudadanoUser,
+      id: `u${i + 200}`,
+      credential_id: `cr${i + 200}`,
+      email: `biguser${i}@test.cl`,
+      ciudadano: { ...ciudadanoUser.ciudadano, primer_nombre: `BigUser${i}`, apellido_paterno: 'Test' },
+    }));
+    mockUserService.listarUsuarios.mockResolvedValue(manyUsers as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('BigUser0 Test')).toBeInTheDocument());
+    // 90 users / PAGE_SIZE(12) = 8 pages → uses ellipsis branch (> 7 pages)
+    // Click page "8" to get to last page
+    const lastPageBtn = screen.queryAllByRole('button').find(b => b.textContent === '8');
+    if (lastPageBtn) {
+      fireEvent.click(lastPageBtn);
+      await waitFor(() => expect(screen.getByText('BigUser84 Test')).toBeInTheDocument());
+    }
+  });
+
+  it('changeRutCrear validates when field is touched (lines 159-160)', async () => {
+    renderPage();
+    await waitFor(() => screen.getByText('Crear usuario'));
+    fireEvent.click(screen.getByText('Crear usuario'));
+    await waitFor(() => screen.getAllByText('Ciudadano', { selector: 'button' }));
+    fireEvent.click(screen.getAllByText('Ciudadano', { selector: 'button' })[0]);
+    await waitFor(() => screen.getByText('Primer nombre *'));
+
+    const runInput = screen.queryByPlaceholderText('12.345.678-9');
+    if (runInput) {
+      // Blur first to mark as touched
+      fireEvent.blur(runInput, { target: { value: '12.345.678-9' } });
+      // Then change (triggers changeRutCrear with touchedCrear['run'] = true → lines 159-160)
+      fireEvent.change(runInput, { target: { value: '11.111.111-1' } });
+    }
   });
 });

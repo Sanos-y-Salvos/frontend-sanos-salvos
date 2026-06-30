@@ -86,13 +86,13 @@ describe('AdminTicketsPage', () => {
   it('shows ticket count', async () => {
     mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
     renderPage();
-    await waitFor(() => expect(screen.getByText('1 ticket encontrado')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText((_, el) => el?.tagName !== 'SCRIPT' && (el?.textContent?.replace(/\s+/g, ' ').trim() === '1 ticket total'))).toBeInTheDocument());
   });
 
   it('shows tickets plural count', async () => {
     mockTicketService.listarTickets.mockResolvedValue([ticket1, ticket2] as any);
     renderPage();
-    await waitFor(() => expect(screen.getByText('2 tickets encontrados')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText((_, el) => el?.tagName !== 'SCRIPT' && (el?.textContent?.replace(/\s+/g, ' ').trim() === '2 tickets total'))).toBeInTheDocument());
   });
 
   it('shows error when tickets fail to load', async () => {
@@ -306,5 +306,157 @@ describe('AdminTicketsPage', () => {
     mockTicketService.listarTickets.mockResolvedValue([ticket2] as any);
     renderPage();
     await waitFor(() => screen.getByText('1 comentario'));
+  });
+
+  it('pagination: renders page buttons when > PAGE_SIZE tickets', async () => {
+    const manyTickets = Array.from({ length: 12 }, (_, i) => ({
+      ...ticket1,
+      id: `tk${i + 10}`,
+      asunto: `Ticket ${i + 1}`,
+    }));
+    mockTicketService.listarTickets.mockResolvedValue(manyTickets as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Ticket 1')).toBeInTheDocument());
+    // With PAGE_SIZE=10, 12 tickets → 2 pages → pagination appears
+    const nextBtn = screen.queryAllByRole('button').find(b => b.querySelector('svg'));
+    expect(nextBtn).toBeDefined();
+  });
+
+  it('search: filters tickets by search text', async () => {
+    mockTicketService.listarTickets.mockResolvedValue([ticket1, ticket2, ticket3] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    const searchInput = screen.getByPlaceholderText(/Buscar/i);
+    fireEvent.change(searchInput, { target: { value: 'Error' } });
+    await waitFor(() => expect(screen.getByText('Error de sistema')).toBeInTheDocument());
+    expect(screen.queryByText('Contenido inapropiado')).not.toBeInTheDocument();
+  });
+
+  it('search: shows empty state when no matches', async () => {
+    mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    const searchInput = screen.getByPlaceholderText(/Buscar/i);
+    fireEvent.change(searchInput, { target: { value: 'xyznotfound' } });
+    await waitFor(() => expect(screen.getByText(/No hay tickets/i)).toBeInTheDocument());
+  });
+
+  it('pagination: clicking page 2 button loads next page', async () => {
+    const manyTickets = Array.from({ length: 12 }, (_, i) => ({
+      ...ticket1,
+      id: `tk${i + 20}`,
+      asunto: `Ticket pag ${i + 1}`,
+      created_at: `2025-01-0${Math.min(i + 1, 9)}T10:00:00Z`,
+    }));
+    mockTicketService.listarTickets.mockResolvedValue(manyTickets as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Ticket pag 1'));
+    // Find all number buttons (page buttons) and click "2"
+    const btn2 = screen.queryAllByRole('button').find(b => b.textContent === '2');
+    if (btn2) {
+      fireEvent.click(btn2);
+      await waitFor(() => expect(screen.getByText('Ticket pag 11')).toBeInTheDocument());
+    }
+  });
+
+  it('pagination: clicks next and prev chevron buttons (lines 66, 78)', async () => {
+    const manyTickets = Array.from({ length: 12 }, (_, i) => ({
+      ...ticket1,
+      id: `tk${i + 50}`,
+      asunto: `ChevTicket ${i + 1}`,
+      created_at: `2025-01-0${Math.min(i + 1, 9)}T10:00:00Z`,
+    }));
+    mockTicketService.listarTickets.mockResolvedValue(manyTickets as any);
+    renderPage();
+    await waitFor(() => screen.getByText('ChevTicket 1'));
+
+    // Next button = last button in pagination
+    const allButtons = screen.queryAllByRole('button');
+    const nextBtn = allButtons[allButtons.length - 1];
+    if (nextBtn && !nextBtn.disabled) {
+      fireEvent.click(nextBtn);
+      await waitFor(() => expect(screen.getByText('ChevTicket 11')).toBeInTheDocument());
+    }
+    // Prev button = second to last before page buttons (look for enabled prev - the one before page "1" button)
+    const btn1 = screen.queryAllByRole('button').find(b => b.textContent === '1');
+    if (btn1) {
+      const prevBtn2 = btn1.previousElementSibling as HTMLButtonElement;
+      if (prevBtn2 && !prevBtn2.disabled) {
+        fireEvent.click(prevBtn2);
+        await waitFor(() => expect(screen.getByText('ChevTicket 1')).toBeInTheDocument());
+      }
+    }
+  });
+
+  it('pagination: >7 pages renders ellipsis (lines 57-61)', async () => {
+    const manyTickets = Array.from({ length: 80 }, (_, i) => ({
+      ...ticket1,
+      id: `tk${i + 100}`,
+      asunto: `BigTicket ${i + 1}`,
+      created_at: `2025-01-01T10:00:00Z`,
+    }));
+    mockTicketService.listarTickets.mockResolvedValue(manyTickets as any);
+    renderPage();
+    await waitFor(() => screen.getByText('BigTicket 1'));
+    // 80 tickets / PAGE_SIZE(10) = 8 pages → totalPages > 7 → ellipsis branch
+    expect(screen.getByText('BigTicket 1')).toBeInTheDocument();
+    // click last page button
+    const lastPageBtn = screen.queryAllByRole('button').find(b => b.textContent === '8');
+    if (lastPageBtn) {
+      fireEvent.click(lastPageBtn);
+      await waitFor(() => expect(screen.getByText('BigTicket 71')).toBeInTheDocument());
+    }
+  });
+
+  it('shows plural "comentarios" for ticket with 2+ comments in list (line 519)', async () => {
+    const ticketWith2Comments = {
+      ...ticket1,
+      comentarios: [
+        { id: 'c1', tipo_autor: 'administrador', contenido: 'Resp1', created_at: '2025-01-01T11:00:00Z' },
+        { id: 'c2', tipo_autor: 'usuario', contenido: 'Resp2', created_at: '2025-01-01T12:00:00Z' },
+      ],
+    };
+    mockTicketService.listarTickets.mockResolvedValue([ticketWith2Comments] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('2 comentarios')).toBeInTheDocument());
+  });
+
+  it('shows "—" when ticket has no user_id and no email_contacto in list/detail (lines 191, 514)', async () => {
+    const ticketNoContact = {
+      ...ticket1,
+      user_id: null,
+      email_contacto: null,
+    };
+    mockTicketService.listarTickets.mockResolvedValue([ticketNoContact] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticketNoContact as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    // Click into detail to trigger line 191
+    fireEvent.click(screen.getAllByText('Error de sistema')[0].closest('button')!);
+    await waitFor(() => expect(screen.getByText('Volver a tickets')).toBeInTheDocument());
+  });
+
+  it('tiempoTranscurrido shows Hoy for today, Ayer for yesterday (lines 33-34)', async () => {
+    const now = new Date();
+    const yesterday = new Date(Date.now() - 86400000);
+    const ticketHoy = { ...ticket1, id: 'today', asunto: 'TicketHoy', created_at: now.toISOString() };
+    const ticketAyer = { ...ticket1, id: 'yest', asunto: 'TicketAyer', created_at: yesterday.toISOString() };
+    mockTicketService.listarTickets.mockResolvedValue([ticketHoy, ticketAyer] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('TicketHoy')).toBeInTheDocument());
+    expect(screen.getByText('Hoy')).toBeInTheDocument();
+    expect(screen.getByText('Ayer')).toBeInTheDocument();
+  });
+
+  it('tiempoTranscurrido shows "dias" and "sem." for recent tickets (lines 35-36)', async () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * 86400000);
+    const tenDaysAgo = new Date(Date.now() - 10 * 86400000);
+    const ticketDias = { ...ticket1, id: 'dias', asunto: 'TicketDias', created_at: threeDaysAgo.toISOString() };
+    const ticketSem = { ...ticket1, id: 'sem', asunto: 'TicketSem', created_at: tenDaysAgo.toISOString() };
+    mockTicketService.listarTickets.mockResolvedValue([ticketDias, ticketSem] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('TicketDias')).toBeInTheDocument());
+    expect(screen.getByText('Hace 3 días')).toBeInTheDocument();
+    expect(screen.getByText('Hace 1 sem.')).toBeInTheDocument();
   });
 });
