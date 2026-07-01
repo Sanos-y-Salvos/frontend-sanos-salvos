@@ -51,7 +51,7 @@ const TestConsumer = () => {
       <span data-testid="user">{ctx.user?.email ?? 'no-user'}</span>
       <span data-testid="loading">{String(ctx.loading)}</span>
       <span data-testid="auth">{String(ctx.isAuthenticated)}</span>
-      <button onClick={() => ctx.login('a@b.com', 'pass')}>login</button>
+      <button onClick={() => ctx.login('a@b.com', 'pass').catch(() => {})}>login</button>
       <button onClick={() => ctx.logout()}>logout</button>
     </div>
   );
