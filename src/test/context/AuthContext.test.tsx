@@ -191,6 +191,24 @@ describe('AuthProvider', () => {
     expect(mockStorage.clearTokens).toHaveBeenCalled();
   });
 
+  it('login clears tokens and throws when both userService and authService fail', async () => {
+    mockAuthService.login.mockResolvedValue({ accessToken: 'acc', refreshToken: 'ref' });
+    mockUserService.obtenerPerfil.mockRejectedValue(new Error('ms-users down'));
+    mockAuthService.getMe.mockRejectedValue(new Error('redis down'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('loading').textContent).toBe('false')
+    );
+    // Fire the click — login() rejects; onClick doesn't await, so we just flush with act
+    await act(async () => {
+      screen.getByText('login').click();
+    });
+    await waitFor(() => expect(mockStorage.clearTokens).toHaveBeenCalled());
+    expect(screen.getByTestId('user').textContent).toBe('no-user');
+    consoleError.mockRestore();
+  });
+
   it('builds institucion user from getMe fallback', async () => {
     mockStorage.getAccessToken.mockReturnValue('token');
     mockUserService.obtenerPerfil.mockRejectedValue({ response: { status: 500 } });
@@ -204,6 +222,66 @@ describe('AuthProvider', () => {
     renderProvider();
     await waitFor(() =>
       expect(screen.getByTestId('user').textContent).toBe('vet@b.com')
+    );
+  });
+
+  it('builds ciudadano user with primer_nombre/apellido_paterno directly in getMe data', async () => {
+    mockStorage.getAccessToken.mockReturnValue('token');
+    mockUserService.obtenerPerfil.mockRejectedValue({ response: { status: 500 } });
+    mockAuthService.getMe.mockResolvedValue({
+      id: 'u2', email: 'c2@b.com', role: 'ciudadano',
+      permissions: null, name: 'Pedro Soto', status: 'active',
+      tipo: 'ciudadano' as const,
+      primer_nombre: 'Pedro',
+      apellido_paterno: 'Soto',
+      run: '22.222.222-2',
+    });
+    renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('c2@b.com')
+    );
+  });
+
+  it('builds ciudadano user from name with no surname (covers partes.slice(1) || "")', async () => {
+    mockStorage.getAccessToken.mockReturnValue('token');
+    mockUserService.obtenerPerfil.mockRejectedValue({ response: { status: 500 } });
+    mockAuthService.getMe.mockResolvedValue({
+      id: 'u3', email: 'mono@b.com', role: 'ciudadano',
+      permissions: null, name: 'Mononym', status: 'active',
+      tipo: 'ciudadano' as const,
+    });
+    renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('mono@b.com')
+    );
+  });
+
+  it('builds ciudadano user with no name (covers cached.name || "" right branch on line 24)', async () => {
+    mockStorage.getAccessToken.mockReturnValue('token');
+    mockUserService.obtenerPerfil.mockRejectedValue({ response: { status: 500 } });
+    mockAuthService.getMe.mockResolvedValue({
+      id: 'u5', email: 'noname@b.com', role: 'ciudadano',
+      permissions: null, status: 'active',
+      tipo: 'ciudadano' as const,
+      // no name, no primer_nombre — partes will be [''] and primer_nombre will be ''
+    });
+    renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('noname@b.com')
+    );
+  });
+
+  it('builds institucion user with no name/razon_social (covers || "" and ?? "" fallbacks)', async () => {
+    mockStorage.getAccessToken.mockReturnValue('token');
+    mockUserService.obtenerPerfil.mockRejectedValue({ response: { status: 500 } });
+    mockAuthService.getMe.mockResolvedValue({
+      id: 'i2', email: 'empty-inst@b.com', role: 'institucion',
+      permissions: null, status: 'active',
+      tipo: 'institucion' as const,
+    });
+    renderProvider();
+    await waitFor(() =>
+      expect(screen.getByTestId('user').textContent).toBe('empty-inst@b.com')
     );
   });
 });

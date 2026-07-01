@@ -638,4 +638,14 @@ describe('PerfilPage - institucion edit mode and extra flows', () => {
       fireEvent.change(fileInput);
     }
   });
+
+  it('shows Building2 icon for institution user without foto_perfil (line 262)', async () => {
+    const instNoFoto = { ...institucionUser, foto_perfil: undefined };
+    mockUser = instNoFoto;
+    mockUserService.obtenerPerfil.mockResolvedValue(instNoFoto as any);
+    renderPage();
+    await waitFor(() => expect(screen.getAllByText('VetCare').length).toBeGreaterThan(0));
+    // Building2 SVG rendered — no img tag since no foto_perfil
+    expect(document.querySelector('img')).toBeNull();
+  });
 });

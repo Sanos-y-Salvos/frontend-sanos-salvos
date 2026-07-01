@@ -159,6 +159,13 @@ describe('userService', () => {
     expect(result).toEqual(stats);
   });
 
+  it('verUsuarioPorCredential calls GET with credential id and returns user', async () => {
+    mockGet.mockResolvedValue({ data: { data: mockUser } });
+    const result = await userService.verUsuarioPorCredential('cred1');
+    expect(mockGet).toHaveBeenCalledWith('/api/users/admin/usuarios/by-credential/cred1');
+    expect(result).toEqual(mockUser);
+  });
+
   it('throws when API rejects', async () => {
     mockGet.mockRejectedValue(new Error('network'));
     await expect(userService.obtenerPerfil()).rejects.toThrow('network');

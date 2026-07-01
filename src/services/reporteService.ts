@@ -47,13 +47,15 @@ export interface NuevoReporte {
 
 export interface EstadisticasReportes {
   total: number;
-  por_tipo:        { tipo: string;    count: number }[];
-  por_estado:      { estado: string;  count: number }[];
-  por_especie:     { especie: string; count: number }[];
-  por_tamanio:     { tamanio: string; count: number }[];
-  por_mes:         { mes: string; count: number }[];
-  por_mes_tipo:    { mes: string; tipo: string; count: number }[];
-  por_mes_especie: { mes: string; especie: string; count: number }[];
+  por_tipo:         { tipo: string;    count: number }[];
+  por_estado:       { estado: string;  count: number }[];
+  por_especie:      { especie: string; count: number }[];
+  por_tamanio:      { tamanio: string; count: number }[];
+  por_mes:          { mes: string; count: number }[];
+  por_mes_tipo:     { mes: string; tipo: string; count: number }[];
+  por_mes_especie:  { mes: string; especie: string; count: number }[];
+  por_mes_estado:   { mes: string; estado: string; count: number }[];
+  por_mes_tamanio:  { mes: string; tamanio: string; count: number }[];
 }
 
 export const getEstadisticasReportes = async (): Promise<EstadisticasReportes> => {
@@ -63,6 +65,23 @@ export const getEstadisticasReportes = async (): Promise<EstadisticasReportes> =
 
 export const cambiarEstadoReporte = async (id: string, estado: string): Promise<Reporte> => {
   const { data } = await reportesApi.patch<{ data: Reporte }>(`/api/mascotas/reportes/${id}/estado`, { estado })
+  return data.data
+}
+
+export interface EditarReporteDTO {
+  nombreMascota?: string
+  especie?: string
+  color?: string
+  tamanio?: string
+  codigoChip?: string
+  descripcion?: string
+  direccionReferencia?: string
+  ubicacionLatitud?: number
+  ubicacionLongitud?: number
+}
+
+export const editarReporte = async (id: string, datos: EditarReporteDTO): Promise<Reporte> => {
+  const { data } = await reportesApi.put<{ data: Reporte }>(`/api/mascotas/reportes/${id}`, datos)
   return data.data
 }
 

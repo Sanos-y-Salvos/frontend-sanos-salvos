@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PawPrint, MapPin, Calendar, Cpu, AlertCircle, Loader2, MessageCircle, CheckCircle2, XCircle } from 'lucide-react';
-import { obtenerReporte, cambiarEstadoReporte } from '../../services/reporteService';
+import { PawPrint, MapPin, Calendar, Cpu, AlertCircle, Loader2, MessageCircle, CheckCircle2, XCircle, Edit2, Check, X, Trash2 } from 'lucide-react';
+import { obtenerReporte, cambiarEstadoReporte, editarReporte } from '../../services/reporteService';
 import { listarMatchesPorReporte } from '../../services/matchingService';
 import { useAuth } from '../../hooks/useAuth';
 import type { Reporte, Match } from '../../types';
@@ -51,6 +51,13 @@ const ReporteDetallePage = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [accionCargando, setAccionCargando] = useState(false);
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [formEditar, setFormEditar] = useState({
+    nombreMascota: '', especie: '', color: '', tamanio: '',
+    codigoChip: '', descripcion: '', direccionReferencia: '',
+    ubicacionLatitud: '', ubicacionLongitud: '',
+  });
+  const [confirmAbandonar, setConfirmAbandonar] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -95,8 +102,50 @@ const ReporteDetallePage = () => {
     try {
       const actualizado = await cambiarEstadoReporte(reporte.id, nuevoEstado);
       setReporte(actualizado);
+      setConfirmAbandonar(false);
     } catch {
       setError('No se pudo actualizar el estado del reporte.');
+    } finally {
+      setAccionCargando(false);
+    }
+  };
+
+  const abrirEdicion = () => {
+    if (!reporte) return;
+    setFormEditar({
+      nombreMascota:      reporte.nombreMascota,
+      especie:            reporte.especie,
+      color:              reporte.color,
+      tamanio:            reporte.tamanio,
+      codigoChip:         reporte.codigoChip ?? '',
+      descripcion:        reporte.descripcion ?? '',
+      direccionReferencia: reporte.direccionReferencia ?? '',
+      ubicacionLatitud:   String(reporte.ubicacionLatitud),
+      ubicacionLongitud:  String(reporte.ubicacionLongitud),
+    });
+    setModoEdicion(true);
+    setError('');
+  };
+
+  const guardarEdicion = async () => {
+    if (!reporte) return;
+    setAccionCargando(true);
+    try {
+      const actualizado = await editarReporte(reporte.id, {
+        nombreMascota:       formEditar.nombreMascota      || undefined,
+        especie:             formEditar.especie            || undefined,
+        color:               formEditar.color              || undefined,
+        tamanio:             formEditar.tamanio            || undefined,
+        codigoChip:          formEditar.codigoChip         || undefined,
+        descripcion:         formEditar.descripcion        || undefined,
+        direccionReferencia: formEditar.direccionReferencia || undefined,
+        ubicacionLatitud:    formEditar.ubicacionLatitud   ? Number(formEditar.ubicacionLatitud)  : undefined,
+        ubicacionLongitud:   formEditar.ubicacionLongitud  ? Number(formEditar.ubicacionLongitud) : undefined,
+      });
+      setReporte(actualizado);
+      setModoEdicion(false);
+    } catch {
+      setError('No se pudo guardar los cambios.');
     } finally {
       setAccionCargando(false);
     }
@@ -199,6 +248,177 @@ const ReporteDetallePage = () => {
               </div>
             </div>
           </div>
+
+          {/* Editar reporte — solo al dueño cuando está activo */}
+          {esOwner && !['RESUELTO', 'ABANDONADO', 'OCULTO'].includes(reporte.estado) && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-0.5 h-4 bg-brand-500 rounded-full" />
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tu reporte</p>
+                </div>
+                {!modoEdicion && (
+                  <button
+                    onClick={abrirEdicion}
+                    className="flex items-center gap-1.5 text-xs font-medium border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    Editar
+                  </button>
+                )}
+              </div>
+
+              {modoEdicion ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Nombre de la mascota</label>
+                      <input
+                        type="text"
+                        value={formEditar.nombreMascota}
+                        onChange={e => setFormEditar(prev => ({ ...prev, nombreMascota: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Especie</label>
+                      <select
+                        value={formEditar.especie}
+                        onChange={e => setFormEditar(prev => ({ ...prev, especie: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all bg-white"
+                      >
+                        {['PERRO', 'GATO', 'AVE', 'CONEJO', 'HAMSTER', 'REPTIL', 'OTRO'].map(e => (
+                          <option key={e} value={e}>{e.charAt(0) + e.slice(1).toLowerCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Tamaño</label>
+                      <select
+                        value={formEditar.tamanio}
+                        onChange={e => setFormEditar(prev => ({ ...prev, tamanio: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all bg-white"
+                      >
+                        {['PEQUEÑO', 'MEDIANO', 'GRANDE'].map(t => (
+                          <option key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Color</label>
+                      <input
+                        type="text"
+                        value={formEditar.color}
+                        onChange={e => setFormEditar(prev => ({ ...prev, color: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Código de chip</label>
+                      <input
+                        type="text"
+                        placeholder="Opcional"
+                        value={formEditar.codigoChip}
+                        onChange={e => setFormEditar(prev => ({ ...prev, codigoChip: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Dirección de referencia</label>
+                      <input
+                        type="text"
+                        value={formEditar.direccionReferencia}
+                        onChange={e => setFormEditar(prev => ({ ...prev, direccionReferencia: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Latitud</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={formEditar.ubicacionLatitud}
+                        onChange={e => setFormEditar(prev => ({ ...prev, ubicacionLatitud: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Longitud</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={formEditar.ubicacionLongitud}
+                        onChange={e => setFormEditar(prev => ({ ...prev, ubicacionLongitud: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-1">Descripción</label>
+                      <textarea
+                        rows={3}
+                        value={formEditar.descripcion}
+                        onChange={e => setFormEditar(prev => ({ ...prev, descripcion: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-400 transition-all resize-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={guardarEdicion}
+                      disabled={accionCargando}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all font-medium"
+                    >
+                      {accionCargando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      Guardar cambios
+                    </button>
+                    <button
+                      onClick={() => setModoEdicion(false)}
+                      disabled={accionCargando}
+                      className="flex items-center gap-1.5 text-sm px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all font-medium"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Botón abandonar */
+                <div>
+                  {!confirmAbandonar ? (
+                    <button
+                      onClick={() => setConfirmAbandonar(true)}
+                      className="w-full flex items-center justify-center gap-2 text-sm py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 transition-all font-medium"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Marcar como abandonado
+                    </button>
+                  ) : (
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+                      <p className="text-sm font-medium text-rose-800 mb-1">¿Confirmar abandono?</p>
+                      <p className="text-xs text-rose-600 mb-3">Esta acción marcará el reporte como abandonado. No recibirá más coincidencias.</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => cambiarEstado('ABANDONADO')}
+                          disabled={accionCargando}
+                          className="flex-1 flex items-center justify-center gap-1.5 text-sm py-2 bg-rose-600 text-white rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-all font-medium"
+                        >
+                          {accionCargando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          Sí, abandonar
+                        </button>
+                        <button
+                          onClick={() => setConfirmAbandonar(false)}
+                          disabled={accionCargando}
+                          className="flex-1 text-sm py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all font-medium"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Acciones para estado EMPAREJADO — solo al dueño */}
           {esOwner && reporte.estado === 'EMPAREJADO' && (

@@ -297,6 +297,52 @@ const AnalisisUsuariosPage = () => {
     return (stats?.por_mes ?? []).map(d => { acum += d.count; return { mes: fmtMes(d.mes), total: acum }; });
   }, [stats]);
 
+  const regionData = useMemo(() => {
+    if (!stats) return [];
+    const hayFiltro = mesDesde || mesHasta || filtroTipo || filtroRol;
+    if (!hayFiltro) {
+      return (stats.por_region ?? []).filter(r => r.region).slice(0, 10)
+        .map(r => ({ region: r.region || 'Sin región', count: r.count }));
+    }
+    const map: Record<string, number> = {};
+    if (filtroRol) {
+      (stats.por_mes_region_rol ?? [])
+        .filter(d => inRange2(d.mes, mesDesde, mesHasta) && d.rol === filtroRol)
+        .forEach(d => { if (d.region) map[d.region] = (map[d.region] ?? 0) + d.count; });
+    } else {
+      (stats.por_mes_region_tipo ?? [])
+        .filter(d => inRange2(d.mes, mesDesde, mesHasta) && (!filtroTipo || d.tipo === filtroTipo))
+        .forEach(d => { if (d.region) map[d.region] = (map[d.region] ?? 0) + d.count; });
+    }
+    return Object.entries(map)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([region, count]) => ({ region, count }));
+  }, [stats, mesDesde, mesHasta, filtroTipo, filtroRol]);
+
+  const comunaData = useMemo(() => {
+    if (!stats) return [];
+    const hayFiltro = mesDesde || mesHasta || filtroTipo || filtroRol;
+    if (!hayFiltro) {
+      return (stats.top_comunas ?? []).filter(c => c.comuna).slice(0, 10)
+        .map(c => ({ comuna: c.comuna || 'Sin comuna', count: c.count }));
+    }
+    const map: Record<string, number> = {};
+    if (filtroRol) {
+      (stats.por_mes_comuna_rol ?? [])
+        .filter(d => inRange2(d.mes, mesDesde, mesHasta) && d.rol === filtroRol)
+        .forEach(d => { if (d.comuna) map[d.comuna] = (map[d.comuna] ?? 0) + d.count; });
+    } else {
+      (stats.por_mes_comuna_tipo ?? [])
+        .filter(d => inRange2(d.mes, mesDesde, mesHasta) && (!filtroTipo || d.tipo === filtroTipo))
+        .forEach(d => { if (d.comuna) map[d.comuna] = (map[d.comuna] ?? 0) + d.count; });
+    }
+    return Object.entries(map)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([comuna, count]) => ({ comuna, count }));
+  }, [stats, mesDesde, mesHasta, filtroTipo, filtroRol]);
+
   if (loading) return (
     <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-400">
@@ -311,8 +357,6 @@ const AnalisisUsuariosPage = () => {
   );
 
   const pct              = stats.total > 0 ? Math.round((stats.activos / stats.total) * 100) : 0;
-  const regionData       = (stats.por_region ?? []).filter(r => r.region).slice(0, 10).map(r => ({ region: r.region || 'Sin región', count: r.count }));
-  const comunaData       = (stats.top_comunas ?? []).filter(c => c.comuna).slice(0, 10).map(c => ({ comuna: c.comuna || 'Sin comuna', count: c.count }));
   const tiposActivos     = filtroTipo ? [filtroTipo] : ['ciudadano', 'institucion'];
   const rolesActivos     = filtroRol ? [filtroRol] : ['ciudadano','veterinaria','municipalidad','moderador'];
   const tasaActivacion   = stats.total > 0 ? Math.round((stats.activos / stats.total) * 100) : 0;
@@ -591,7 +635,7 @@ const AnalisisUsuariosPage = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Usuarios por región" note="Datos totales — no varía con filtros">
+          <ChartCard title={filtrosActivos ? 'Usuarios por región (filtrado)' : 'Usuarios por región'}>
             {regionData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-8">Sin datos de región</p>
             ) : (
@@ -607,7 +651,7 @@ const AnalisisUsuariosPage = () => {
             )}
           </ChartCard>
 
-          <ChartCard title="Top 10 comunas" note="Datos totales — no varía con filtros">
+          <ChartCard title={filtrosActivos ? 'Top 10 comunas (filtrado)' : 'Top 10 comunas'}>
             {comunaData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-8">Sin datos de comuna</p>
             ) : (

@@ -59,7 +59,7 @@ const AppRoutes = () => {
   const { isAuthenticated, user } = useAuth();
   const { isAdminMode, isEmployee } = useAdminMode();
   const location = useLocation();
-  const ocultarChatbot = location.pathname === '/mapa';
+  const ocultarChatbot = location.pathname === '/mapa' || location.pathname.startsWith('/admin');
   const showSidebar = isEmployee && isAdminMode;
 
   return (

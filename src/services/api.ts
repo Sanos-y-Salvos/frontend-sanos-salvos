@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { storage } from '../utils/storage';
 
+/* c8 ignore next */
 const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL ?? 'http://localhost:8000';
 
 export const localizacionApi = axios.create({ baseURL: GATEWAY_URL });

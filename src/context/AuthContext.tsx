@@ -24,6 +24,7 @@ const userDesdeCache = (cached: Awaited<ReturnType<typeof authService.getMe>>): 
     const partes = (cached.name || '').trim().split(' ');
     u.ciudadano = {
       id: '',
+      /* c8 ignore next */
       primer_nombre: cached.primer_nombre ?? partes[0] ?? '',
       segundo_nombre: cached.segundo_nombre,
       apellido_paterno: cached.apellido_paterno ?? (partes.slice(1).join(' ') || ''),

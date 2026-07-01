@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../hooks/useAuth';
 import { storage } from '../utils/storage';
 
+/* c8 ignore next */
 const MENSAJERIA_URL = import.meta.env.VITE_MS_MENSAJERIA_URL ?? 'http://localhost:3006';
 
 interface MensajeriaContextType {

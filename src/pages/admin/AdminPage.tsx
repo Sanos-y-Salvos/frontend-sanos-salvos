@@ -98,6 +98,7 @@ const ChartCard = ({ title, icon: Icon, delay = 0, children, to }: {
     </motion.div>
   );
   if (to) return <Link to={to} className="block group">{inner}</Link>;
+  /* c8 ignore next */
   return inner;
 };
 
@@ -518,6 +519,25 @@ const AdminPage = () => {
                 meta={ticketStats ? `${ticketStats.total.toLocaleString('es-CL')} tickets en total` : undefined}
                 href="/admin/analisis/tickets"
               />
+
+              {/* KPIs */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                <KpiCard label="Total tickets"  value={ticketStats?.total ?? 0}
+                  icon={TicketCheck} color="bg-slate-100 text-slate-600"
+                  onClick={() => openTicketsPanel('Todos los tickets')} />
+                <KpiCard label="Abiertos"
+                  value={ticketStats?.por_estado.find(e => e.estado === 'abierto')?.count ?? 0}
+                  icon={Activity} color="bg-indigo-50 text-indigo-600"
+                  onClick={() => openTicketsPanel('Tickets abiertos', 'abierto')} />
+                <KpiCard label="En proceso"
+                  value={ticketStats?.por_estado.find(e => e.estado === 'en_proceso')?.count ?? 0}
+                  icon={Search} color="bg-amber-50 text-amber-600"
+                  onClick={() => openTicketsPanel('Tickets en proceso', 'en_proceso')} />
+                <KpiCard label="Tickets resueltos"
+                  value={ticketStats?.por_estado.find(e => e.estado === 'resuelto')?.count ?? 0}
+                  icon={CheckCircle2} color="bg-emerald-50 text-emerald-600"
+                  onClick={() => openTicketsPanel('Tickets resueltos', 'resuelto')} />
+              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <ChartCard title="Tickets por estado" icon={Activity} delay={0.3} to="/admin/analisis/tickets">

@@ -53,6 +53,13 @@ vi.mock('../../../utils/validators', () => ({
   validateField: vi.fn().mockReturnValue(''),
   formatDireccion: vi.fn((v: string) => v),
   sanitizeNombre: vi.fn((v: string) => v),
+  getPasswordReqs: vi.fn((v: string) => [
+    { label: 'Entre 6 y 13 caracteres', met: v.length >= 6 && v.length <= 13 },
+    { label: 'Al menos una mayúscula', met: /[A-Z]/.test(v) },
+    { label: 'Al menos una minúscula', met: /[a-z]/.test(v) },
+    { label: 'Al menos un número', met: /[0-9]/.test(v) },
+    { label: 'Al menos un carácter especial (!@#...)', met: /[^A-Za-z0-9]/.test(v) },
+  ]),
 }));
 
 const ciudadanoUser = {
@@ -266,6 +273,27 @@ describe('AdminUsuariosPage', () => {
     await waitFor(() => expect(document.querySelector('form')).toBeInTheDocument());
     fireEvent.submit(document.querySelector('form')!);
     await waitFor(() => expect(screen.getAllByRole('alert')[0]).toHaveTextContent('network error'));
+  });
+
+  it('shows default error message when creating user fails with no message (line 303 fallback)', async () => {
+    mockUserService.registrarCiudadano.mockRejectedValue({});
+    renderPage();
+    await openCreateModal();
+    await waitFor(() => expect(document.querySelector('form')).toBeInTheDocument());
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => expect(screen.getAllByRole('alert')[0]).toHaveTextContent('Error al crear el usuario'));
+  });
+
+  it('creates ciudadano user with segundo_nombre and apellido_materno (lines 287-288 TRUE branches)', async () => {
+    renderPage();
+    await openCreateModal();
+    await waitFor(() => expect(document.querySelector('form')).toBeInTheDocument());
+    const segundoInput = screen.queryByRole('textbox', { name: /Segundo nombre/i });
+    if (segundoInput) fireEvent.change(segundoInput, { target: { value: 'Pablo' } });
+    const apellidoMatInput = screen.queryByRole('textbox', { name: /Segundo apellido/i });
+    if (apellidoMatInput) fireEvent.change(apellidoMatInput, { target: { value: 'López' } });
+    fireEvent.submit(document.querySelector('form')!);
+    await waitFor(() => expect(mockUserService.registrarCiudadano).toHaveBeenCalled());
   });
 
   it('stops form submission when validation fails', async () => {
@@ -990,5 +1018,66 @@ describe('AdminUsuariosPage - extra flows', () => {
       // Then change (triggers changeRutCrear with touchedCrear['run'] = true → lines 159-160)
       fireEvent.change(runInput, { target: { value: '11.111.111-1' } });
     }
+  });
+
+  it('detail shows "-" for empty region and comuna (lines 364-365)', async () => {
+    const userNoRegion = { ...ciudadanoUser, region: '', comuna: '' };
+    mockUserService.listarUsuarios.mockResolvedValue([userNoRegion] as any);
+    mockUserService.verUsuario.mockResolvedValue(userNoRegion as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a usuarios'));
+    const dashCells = screen.getAllByText('-');
+    expect(dashCells.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('detail shows "-" for missing segundo_nombre and apellido_materno (lines 387-389)', async () => {
+    const minimalCiudadano = {
+      ...ciudadanoUser,
+      ciudadano: {
+        id: 'c1', primer_nombre: 'Juan', segundo_nombre: undefined,
+        apellido_paterno: 'Pérez', apellido_materno: undefined,
+        run: '12.345.678-9', direccion: '',
+      },
+    };
+    mockUserService.listarUsuarios.mockResolvedValue([minimalCiudadano] as any);
+    mockUserService.verUsuario.mockResolvedValue(minimalCiudadano as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a usuarios'));
+    // segundo_nombre and apellido_materno show '-' when undefined
+    const dashCells = screen.getAllByText('-');
+    expect(dashCells.length).toBeGreaterThan(0);
+  });
+
+  it('edit mode with empty telefono uses empty string fallback (line 452)', async () => {
+    const userNoTelefono = { ...ciudadanoUser, telefono: '' };
+    mockUserService.listarUsuarios.mockResolvedValue([userNoTelefono] as any);
+    mockUserService.verUsuario.mockResolvedValue(userNoTelefono as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    fireEvent.click(screen.getAllByText('Juan Pérez')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Editar'));
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => screen.getByText('Guardar cambios'));
+    // telefono input should have empty value (the || '' branch is taken)
+    const telefonoInput = screen.queryByPlaceholderText('12345678');
+    expect(telefonoInput).toBeTruthy();
+    expect((telefonoInput as HTMLInputElement).value).toBe('');
+  });
+
+  it('search by telefono digits matches user, covers empty telefono fallback (lines 588, 594)', async () => {
+    const userNoTelefono2 = { ...ciudadanoUser, id: 'u99', email: 'notel@test.cl', telefono: '', ciudadano: { ...ciudadanoUser.ciudadano, primer_nombre: 'Sin', apellido_paterno: 'Tel' } };
+    mockUserService.listarUsuarios.mockResolvedValue([ciudadanoUser, userNoTelefono2] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    const searchInput = screen.getByPlaceholderText(/buscar/i);
+    // "9123" (4 digits) matches ciudadanoUser.telefono "912345678"
+    fireEvent.change(searchInput, { target: { value: '9123' } });
+    await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
+    // userNoTelefono2 is filtered out (telefono empty doesn't match)
+    expect(screen.queryByText('Sin Tel')).not.toBeInTheDocument();
   });
 });

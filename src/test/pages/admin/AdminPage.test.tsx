@@ -22,6 +22,7 @@ vi.mock('../../../services/userService', () => ({
       por_region: [{ region: '13', count: 50 }],
       top_comunas: [{ comuna: 'Santiago', count: 30 }],
     }),
+    listarUsuarios: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -32,6 +33,7 @@ vi.mock('../../../services/ticketService', () => ({
       por_estado: [{ estado: 'abierto', count: 20 }],
       por_categoria: [{ categoria: 'problema_tecnico', count: 25 }],
     }),
+    listarTickets: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -43,6 +45,7 @@ vi.mock('../../../services/reporteService', () => ({
     por_tamanio: [{ tamanio: 'PEQUENO', count: 80 }, { tamanio: 'MEDIANO', count: 90 }, { tamanio: 'GRANDE', count: 30 }],
     por_especie: [{ especie: 'PERRO', count: 120 }, { especie: 'GATO', count: 70 }, { especie: 'AVE', count: 10 }],
   }),
+  listarReportes: vi.fn().mockResolvedValue({ data: [], total: 0 }),
 }));
 
 vi.mock('../../../services/regionService', () => ({
@@ -80,7 +83,7 @@ vi.mock('recharts', () => ({
 
 import { userService } from '../../../services/userService';
 import { ticketService } from '../../../services/ticketService';
-import { getEstadisticasReportes } from '../../../services/reporteService';
+import { getEstadisticasReportes, listarReportes } from '../../../services/reporteService';
 
 const renderPage = () =>
   render(<MemoryRouter><AdminPage /></MemoryRouter>);
@@ -112,6 +115,9 @@ describe('AdminPage', () => {
       por_tamanio: [{ tamanio: 'PEQUENO', count: 80 }, { tamanio: 'MEDIANO', count: 90 }, { tamanio: 'GRANDE', count: 30 }],
       por_especie: [{ especie: 'PERRO', count: 120 }, { especie: 'GATO', count: 70 }, { especie: 'AVE', count: 10 }],
     } as any);
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([]);
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([]);
+    vi.mocked(listarReportes).mockResolvedValue({ data: [], total: 0 } as any);
   });
 
   it('shows loading state initially', () => {
@@ -202,5 +208,277 @@ describe('AdminPage', () => {
     expect(screen.getByText('Perdidas')).toBeInTheDocument();
     expect(screen.getByText('Encontradas')).toBeInTheDocument();
     expect(screen.getByText('Resueltos')).toBeInTheDocument();
+  });
+
+  it('shows ticket KPI cards', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Total tickets')).toBeInTheDocument());
+    expect(screen.getByText('Abiertos')).toBeInTheDocument();
+    expect(screen.getByText('En proceso')).toBeInTheDocument();
+    expect(screen.getByText('Tickets resueltos')).toBeInTheDocument();
+  });
+
+  it('opens users panel with empty state when Total registrados KPI is clicked', async () => {
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => expect(vi.mocked(userService.listarUsuarios)).toHaveBeenCalled());
+    await waitFor(() => screen.getByText('No hay registros para mostrar.'));
+  });
+
+  it('opens users panel and renders user items', async () => {
+    const testUser = {
+      id: 'u1', email: 'juan@test.cl', rol: 'ciudadano', tipo: 'ciudadano',
+      is_active: true, created_at: '2025-01-01T00:00:00Z',
+      ciudadano: { primer_nombre: 'Juan', apellido_paterno: 'Pérez' },
+    };
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([testUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => screen.getByText('Juan Pérez'));
+    expect(screen.getByText('juan@test.cl')).toBeInTheDocument();
+  });
+
+  it('renders user panel with institucion user (uses razon_social)', async () => {
+    const instUser = {
+      id: 'u2', email: 'vet@test.cl', rol: 'veterinaria', tipo: 'institucion',
+      is_active: false, created_at: '2025-01-02T00:00:00Z',
+      institucion: { razon_social: 'Clínica Vet Ltda.' },
+    };
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([instUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => screen.getByText('Clínica Vet Ltda.'));
+  });
+
+  it('renders user panel with user that has no ciudadano or institucion (uses email)', async () => {
+    const noSubUser = {
+      id: 'u3', email: 'anon@test.cl', rol: 'ciudadano', tipo: 'ciudadano',
+      is_active: true, created_at: '2025-01-03T00:00:00Z',
+    };
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([noSubUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => expect(screen.getAllByText('anon@test.cl').length).toBeGreaterThan(0));
+  });
+
+  it('filters users by tipo when Ciudadanos KPI is clicked', async () => {
+    const ciudadano = { id: 'u1', email: 'c@test.cl', rol: 'ciudadano', tipo: 'ciudadano', is_active: true,
+      ciudadano: { primer_nombre: 'María', apellido_paterno: 'García' } };
+    const institucion = { id: 'u2', email: 'i@test.cl', rol: 'veterinaria', tipo: 'institucion', is_active: true,
+      institucion: { razon_social: 'Vet SA' } };
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([ciudadano, institucion] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Ciudadanos'));
+    fireEvent.click(screen.getByText('Ciudadanos'));
+    await waitFor(() => screen.getByText('María García'));
+    expect(screen.queryByText('Vet SA')).not.toBeInTheDocument();
+  });
+
+  it('handles error when opening users panel fails', async () => {
+    vi.mocked(userService.listarUsuarios).mockRejectedValue(new Error('fail'));
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => expect(vi.mocked(userService.listarUsuarios)).toHaveBeenCalled());
+  });
+
+  it('opens reports panel and renders report items', async () => {
+    const testReport = {
+      id: 'r1', nombreMascota: 'Firulais', especie: 'PERRO', color: 'café',
+      tipo: 'PERDIDA', estado: 'EN_BUSQUEDA', fechaPublicacion: '2025-01-01T00:00:00Z',
+      direccionReferencia: 'Av. Siempre Viva',
+    };
+    vi.mocked(listarReportes).mockResolvedValue({ data: [testReport], total: 1 } as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Reportes totales'));
+    fireEvent.click(screen.getByText('Reportes totales'));
+    await waitFor(() => screen.getByText('Firulais'));
+  });
+
+  it('renders report panel with no direccionReferencia', async () => {
+    const testReport = {
+      id: 'r2', nombreMascota: 'Luna', especie: 'GATO', color: 'blanco',
+      tipo: 'ENCONTRADA', estado: 'RESUELTO', fechaPublicacion: '2025-01-02T00:00:00Z',
+    };
+    vi.mocked(listarReportes).mockResolvedValue({ data: [testReport], total: 1 } as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Reportes totales'));
+    fireEvent.click(screen.getByText('Reportes totales'));
+    await waitFor(() => screen.getByText('Luna'));
+  });
+
+  it('handles error when opening reports panel fails', async () => {
+    vi.mocked(listarReportes).mockRejectedValue(new Error('fail'));
+    renderPage();
+    await waitFor(() => screen.getByText('Reportes totales'));
+    fireEvent.click(screen.getByText('Reportes totales'));
+    await waitFor(() => expect(vi.mocked(listarReportes)).toHaveBeenCalled());
+  });
+
+  it('opens tickets panel and renders ticket items', async () => {
+    const testTicket = {
+      id: 'tk1', asunto: 'Mi ticket urgente', categoria: 'otro',
+      estado: 'abierto', email_contacto: 'user@test.cl',
+      created_at: '2025-01-01T00:00:00Z',
+    };
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([testTicket] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total tickets'));
+    fireEvent.click(screen.getByText('Total tickets'));
+    await waitFor(() => screen.getByText('Mi ticket urgente'));
+  });
+
+  it('renders ticket panel with unknown categoria (raw value)', async () => {
+    const testTicket = {
+      id: 'tk2', categoria: 'categoria_desconocida',
+      estado: 'cerrado', created_at: '2025-01-02T00:00:00Z',
+    };
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([testTicket] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total tickets'));
+    fireEvent.click(screen.getByText('Total tickets'));
+    await waitFor(() => screen.getByText('(sin asunto)'));
+  });
+
+  it('handles error when opening tickets panel fails', async () => {
+    vi.mocked(ticketService.listarTickets).mockRejectedValue(new Error('fail'));
+    renderPage();
+    await waitFor(() => screen.getByText('Total tickets'));
+    fireEvent.click(screen.getByText('Total tickets'));
+    await waitFor(() => expect(vi.mocked(ticketService.listarTickets)).toHaveBeenCalled());
+  });
+
+  it('opens tickets abiertos panel via Abiertos KPI', async () => {
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('Abiertos'));
+    fireEvent.click(screen.getByText('Abiertos'));
+    await waitFor(() => expect(vi.mocked(ticketService.listarTickets)).toHaveBeenCalledWith('abierto'));
+  });
+
+  it('closes panel with DetailPanel X button', async () => {
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('Total registrados'));
+    fireEvent.click(screen.getByText('Total registrados'));
+    await waitFor(() => screen.getByText('No hay registros para mostrar.'));
+    const closeBtn = screen.getByRole('button', { name: '' });
+    // Click close (X) button in DetailPanel
+    const xButton = document.querySelector('.flex-shrink-0.w-8.h-8') as HTMLElement;
+    if (xButton) fireEvent.click(xButton);
+    await waitFor(() => expect(screen.queryByText('No hay registros para mostrar.')).not.toBeInTheDocument());
+  });
+
+  it('opens Cuentas activas users panel via KPI click', async () => {
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('Cuentas activas'));
+    fireEvent.click(screen.getByText('Cuentas activas'));
+    await waitFor(() => expect(vi.mocked(userService.listarUsuarios)).toHaveBeenCalledWith({ is_active: true }));
+  });
+
+  it('opens Instituciones users panel via KPI click and filters client-side', async () => {
+    const instUser = { id: 'u2', email: 'vet@test.cl', rol: 'veterinaria', tipo: 'institucion', is_active: true,
+      institucion: { razon_social: 'Vet SA' } };
+    const citizUser = { id: 'u1', email: 'c@test.cl', rol: 'ciudadano', tipo: 'ciudadano', is_active: true,
+      ciudadano: { primer_nombre: 'Juan', apellido_paterno: 'García' } };
+    vi.mocked(userService.listarUsuarios).mockResolvedValue([instUser, citizUser] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Instituciones'));
+    fireEvent.click(screen.getByText('Instituciones'));
+    await waitFor(() => expect(vi.mocked(userService.listarUsuarios)).toHaveBeenCalled());
+    await waitFor(() => screen.getByText('Vet SA'));
+    expect(screen.queryByText('Juan García')).not.toBeInTheDocument();
+  });
+
+  it('opens Perdidas reports panel via KPI click', async () => {
+    vi.mocked(listarReportes).mockResolvedValue({ data: [], total: 0 } as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Perdidas'));
+    fireEvent.click(screen.getByText('Perdidas'));
+    await waitFor(() => expect(vi.mocked(listarReportes)).toHaveBeenCalledWith(expect.objectContaining({ tipo: 'PERDIDA' })));
+  });
+
+  it('opens Encontradas reports panel via KPI click', async () => {
+    vi.mocked(listarReportes).mockResolvedValue({ data: [], total: 0 } as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Encontradas'));
+    fireEvent.click(screen.getByText('Encontradas'));
+    await waitFor(() => expect(vi.mocked(listarReportes)).toHaveBeenCalledWith(expect.objectContaining({ tipo: 'ENCONTRADA' })));
+  });
+
+  it('opens Resueltos reports panel via KPI click', async () => {
+    vi.mocked(listarReportes).mockResolvedValue({ data: [], total: 0 } as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Resueltos'));
+    fireEvent.click(screen.getByText('Resueltos'));
+    await waitFor(() => expect(vi.mocked(listarReportes)).toHaveBeenCalledWith(expect.objectContaining({ estado: 'RESUELTO' })));
+  });
+
+  it('renders HBarChart Sin datos when rolData is empty', async () => {
+    vi.mocked(userService.getEstadisticas).mockResolvedValue({
+      total: 100, activos: 80,
+      por_tipo: [{ tipo: 'ciudadano', count: 70 }, { tipo: 'institucion', count: 30 }],
+      por_tipo_institucion: [{ tipo_institucion: 'veterinaria', count: 20 }, { tipo_institucion: 'municipalidad', count: 10 }],
+      por_rol: [],
+      por_region: [],
+      top_comunas: [],
+    } as any);
+    renderPage();
+    await waitFor(() => expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0));
+  });
+
+  it('renders DonutChart Sin datos when all type counts are zero', async () => {
+    vi.mocked(userService.getEstadisticas).mockResolvedValue({
+      total: 0, activos: 0,
+      por_tipo: [{ tipo: 'ciudadano', count: 0 }, { tipo: 'institucion', count: 0 }],
+      por_tipo_institucion: [{ tipo_institucion: 'veterinaria', count: 0 }, { tipo_institucion: 'municipalidad', count: 0 }],
+      por_rol: [],
+      por_region: [],
+      top_comunas: [],
+    } as any);
+    renderPage();
+    await waitFor(() => expect(screen.getAllByText('Sin datos').length).toBeGreaterThan(0));
+  });
+
+  it('opens En proceso tickets panel via KPI click', async () => {
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('En proceso'));
+    fireEvent.click(screen.getByText('En proceso'));
+    await waitFor(() => expect(vi.mocked(ticketService.listarTickets)).toHaveBeenCalledWith('en_proceso'));
+  });
+
+  it('renders with null user (covers user?. null branches on lines 432-433)', async () => {
+    mockUser = null;
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Bienvenido')).toBeInTheDocument());
+  });
+
+  it('renders ticket panel with unknown estado (covers lines 398-399 ?? fallbacks)', async () => {
+    const unknownEstadoTicket = {
+      id: 'tk99', asunto: 'Ticket extraño', categoria: 'otro',
+      estado: 'estado_desconocido', created_at: '2025-01-01T00:00:00Z',
+    };
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([unknownEstadoTicket] as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Total tickets'));
+    fireEvent.click(screen.getByText('Total tickets'));
+    await waitFor(() => screen.getByText('Ticket extraño'));
+    // Unknown estado falls back to raw value via ?? t.estado
+    expect(screen.getByText('estado_desconocido')).toBeInTheDocument();
+  });
+
+  it('opens Tickets resueltos panel via KPI click', async () => {
+    vi.mocked(ticketService.listarTickets).mockResolvedValue([]);
+    renderPage();
+    await waitFor(() => screen.getByText('Tickets resueltos'));
+    fireEvent.click(screen.getByText('Tickets resueltos'));
+    await waitFor(() => expect(vi.mocked(ticketService.listarTickets)).toHaveBeenCalledWith('resuelto'));
   });
 });

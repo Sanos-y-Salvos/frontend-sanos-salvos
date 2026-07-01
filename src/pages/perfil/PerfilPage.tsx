@@ -498,6 +498,7 @@ const PerfilPage = () => {
             <div className="relative">
               <Input
                 label="Contraseña actual"
+                data-testid="Contraseña actual"
                 type={showActual ? 'text' : 'password'}
                 value={contrasenaActual}
                 onChange={e => onChangePass('contrasena_actual', e.target.value, setContrasenaActual)}
@@ -516,6 +517,7 @@ const PerfilPage = () => {
             <div className="relative">
               <Input
                 label="Nueva contraseña"
+                data-testid="Nueva contraseña"
                 type={showNueva ? 'text' : 'password'}
                 value={contrasenaNueva}
                 onChange={e => onNuevaPassChange(e.target.value)}
@@ -535,6 +537,7 @@ const PerfilPage = () => {
             <div className="relative">
               <Input
                 label="Confirmar nueva contraseña"
+                data-testid="Confirmar nueva contraseña"
                 type={showConfirm ? 'text' : 'password'}
                 value={contrasenaConfirm}
                 onChange={e => onChangePass('confirm_password', e.target.value, setContrasenaConfirm, { password: contrasenaNueva })}

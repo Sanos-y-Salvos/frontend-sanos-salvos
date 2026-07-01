@@ -255,14 +255,32 @@ const AnalisisTicketsPage = () => {
       .map(c => ({ name: CAT_LABELS[c.categoria] ?? c.categoria, value: c.count, fill: CAT_COLORS[c.categoria] ?? '#94a3b8' }));
   }, [stats, mesDesde, mesHasta, filtroCateg, filtrosActivos]);
 
-  /* pie estado (no varía con filtros — es estado actual) */
+  /* pie estado — re-agrega desde por_mes_estado cuando hay filtro de fechas */
   const estadoPieData = useMemo(() => {
     if (!stats) return [];
+    if (mesDesde || mesHasta) {
+      const map: Record<string, number> = {};
+      (stats.por_mes_estado ?? [])
+        .filter(d => inRange(d.mes, mesDesde, mesHasta) && (!filtroEstado || d.estado === filtroEstado))
+        .forEach(d => { map[d.estado] = (map[d.estado] ?? 0) + d.count; });
+      return Object.entries(map).filter(([, v]) => v > 0)
+        .map(([estado, count]) => ({ name: ESTADO_LABELS[estado] ?? estado, value: count, fill: ESTADO_COLORS[estado] ?? '#94a3b8' }));
+    }
     return stats.por_estado.filter(e => e.count > 0 && (!filtroEstado || e.estado === filtroEstado))
       .map(e => ({ name: ESTADO_LABELS[e.estado] ?? e.estado, value: e.count, fill: ESTADO_COLORS[e.estado] ?? '#94a3b8' }));
-  }, [stats, filtroEstado]);
+  }, [stats, mesDesde, mesHasta, filtroEstado]);
 
-  const totalPeriodo = useMemo(() => mesData.reduce((s, d) => s + d.count, 0), [mesData]);
+  const totalPeriodo = useMemo(() => {
+    if (!stats) return 0;
+    // Sin rango de fechas: leer desde los totales pre-agregados (siempre correctos)
+    if (!mesDesde && !mesHasta) {
+      if (filtroEstado && !filtroCateg)
+        return stats.por_estado.find(e => e.estado === filtroEstado)?.count ?? 0;
+      if (filtroCateg && !filtroEstado)
+        return stats.por_categoria.find(c => c.categoria === filtroCateg)?.count ?? 0;
+    }
+    return mesData.reduce((s, d) => s + d.count, 0);
+  }, [stats, mesData, filtroEstado, filtroCateg, mesDesde, mesHasta]);
   const catsActivas  = filtroCateg ? [filtroCateg] : ['problema_tecnico', 'reporte_abuso', 'otro'];
 
   /* tiempo de resolución — respeta filtro de fechas usando el desglose mensual */
@@ -538,8 +556,7 @@ const AnalisisTicketsPage = () => {
 
         {/* Estado y Categoría */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title={filtroEstado ? `Estado: ${ESTADO_LABELS[filtroEstado]}` : 'Distribución por estado'}
-            note="Snapshot del estado actual — no varía con el filtro de fechas">
+          <ChartCard title={filtroEstado ? `Estado: ${ESTADO_LABELS[filtroEstado]}` : (mesDesde || mesHasta ? 'Distribución por estado (período filtrado)' : 'Distribución por estado')}>
             {estadoPieData.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-10">Sin datos</p>
             ) : (

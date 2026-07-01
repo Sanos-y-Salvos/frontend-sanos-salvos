@@ -221,7 +221,7 @@ const AnalisisMascotasPage = () => {
   /* mes total */
   const mesData = useMemo(() => {
     if (!stats) return [];
-    let rows = (stats.por_mes ?? []).filter(d => inRange(d.mes, mesDesde, mesHasta));
+    const rows = (stats.por_mes ?? []).filter(d => inRange(d.mes, mesDesde, mesHasta));
     if (filtroTipo || filtroEspecie) {
       /* re-aggregate from granular rows */
       const src = filtroEspecie
@@ -315,6 +315,35 @@ const AnalisisMascotasPage = () => {
   );
   const tiposActivos = filtroTipo ? [filtroTipo] : ['PERDIDA', 'ENCONTRADA'];
 
+  const estadoData = useMemo(() => {
+    if (!stats) return [] as { estado: string; count: number }[];
+    if (mesDesde || mesHasta) {
+      const map: Record<string, number> = {};
+      (stats.por_mes_estado ?? [])
+        .filter(d => inRange(d.mes, mesDesde, mesHasta))
+        .forEach(d => { map[d.estado] = (map[d.estado] ?? 0) + d.count; });
+      return stats.por_estado.map(e => ({ estado: e.estado, count: map[e.estado] ?? 0 }));
+    }
+    return stats.por_estado;
+  }, [stats, mesDesde, mesHasta]);
+
+  const tamanioData = useMemo(() => {
+    if (!stats) return [];
+    if (mesDesde || mesHasta) {
+      const map: Record<string, number> = {};
+      (stats.por_mes_tamanio ?? [])
+        .filter(d => inRange(d.mes, mesDesde, mesHasta))
+        .forEach(d => { map[d.tamanio] = (map[d.tamanio] ?? 0) + d.count; });
+      const TAMANIO_ORDER = ['PEQUEÑO', 'MEDIANO', 'GRANDE'];
+      return TAMANIO_ORDER.map((t, i) => ({
+        tamanio: tamanioLabel[t] ?? t, count: map[t] ?? 0, fill: TAMANIO_COLORS[i] ?? '#94a3b8',
+      })).filter(d => d.count > 0);
+    }
+    return (stats.por_tamanio ?? []).map((t, i) => ({
+      tamanio: tamanioLabel[t.tamanio] ?? t.tamanio, count: t.count, fill: TAMANIO_COLORS[i] ?? '#94a3b8',
+    }));
+  }, [stats, mesDesde, mesHasta]);
+
   if (loading) return (
     <div className="min-h-screen flex flex-col admin-glass"><Navbar />
       <div className="flex-1 flex items-center justify-center gap-3 text-slate-400">
@@ -328,24 +357,18 @@ const AnalisisMascotasPage = () => {
 
   const perdidos    = stats.por_tipo.find(t => t.tipo === 'PERDIDA')?.count ?? 0;
   const encontrados = stats.por_tipo.find(t => t.tipo === 'ENCONTRADA')?.count ?? 0;
-  const resueltos   = stats.por_estado.find(e => e.estado === 'RESUELTO')?.count ?? 0;
-  const enBusqueda  = stats.por_estado.find(e => e.estado === 'EN_BUSQUEDA')?.count ?? 0;
-  const abandonados = stats.por_estado.find(e => e.estado === 'ABANDONADO')?.count ?? 0;
+  const resueltos   = estadoData.find(e => e.estado === 'RESUELTO')?.count ?? 0;
+  const abandonados = estadoData.find(e => e.estado === 'ABANDONADO')?.count ?? 0;
+  const estadoTotal = estadoData.reduce((s, d) => s + d.count, 0);
 
   /* indicadores derivados */
-  const tasaResolucion  = stats.total > 0 ? Math.round((resueltos / stats.total) * 100) : 0;
-  const tasaAbandono    = stats.total > 0 ? Math.round((abandonados / stats.total) * 100) : 0;
+  const tasaResolucion  = estadoTotal > 0 ? Math.round((resueltos / estadoTotal) * 100) : 0;
+  const tasaAbandono    = estadoTotal > 0 ? Math.round((abandonados / estadoTotal) * 100) : 0;
   const ratioPE         = encontrados > 0 ? (perdidos / encontrados).toFixed(2) : '∞';
   const meses           = stats.por_mes ?? [];
   const mesPico         = [...meses].sort((a, b) => b.count - a.count)[0] ?? null;
   const especiePrincipal = [...(stats.por_especie ?? [])].sort((a, b) => b.count - a.count)[0] ?? null;
   const promedioMensual  = meses.length > 0 ? Math.round(stats.total / meses.length) : 0;
-  const estadoPieData = (stats.por_estado ?? []).filter(e => e.count > 0)
-    .map(e => ({ name: estadoLabel[e.estado] ?? e.estado, value: e.count, fill: ESTADO_COLORS[e.estado] ?? '#94a3b8' }));
-  const tamanioData = (stats.por_tamanio ?? []).map((t, i) => ({
-    tamanio: tamanioLabel[t.tamanio] ?? t.tamanio, count: t.count, fill: TAMANIO_COLORS[i] ?? '#94a3b8',
-  }));
-
   return (
     <div className="min-h-screen flex flex-col admin-glass">
       <Navbar />
@@ -448,9 +471,9 @@ const AnalisisMascotasPage = () => {
             onClick={() => openPanel('Mascotas encontradas', { tipo: 'ENCONTRADA' })} />
           <KpiCard icon={CheckCircle}
             value={resueltos}
-            label="Casos resueltos"
+            label={(mesDesde || mesHasta) ? 'Resueltos en período' : 'Casos resueltos'}
             color="bg-indigo-500"
-            sub={filtrosActivos ? 'estado actual del sistema' : undefined}
+            sub={(mesDesde || mesHasta) ? undefined : (filtrosActivos ? 'por tipo/especie' : undefined)}
             onClick={() => openPanel('Casos resueltos', { estado: 'RESUELTO' })} />
         </div>
 
@@ -461,7 +484,7 @@ const AnalisisMascotasPage = () => {
             <InsightCard
               label="Tasa de resolución"
               value={`${tasaResolucion}%`}
-              sub={`${resueltos} de ${stats.total} reportes resueltos`}
+              sub={`${resueltos} de ${estadoTotal || stats.total} reportes resueltos`}
               bar={tasaResolucion}
               onClick={() => openPanel('Casos resueltos', { estado: 'RESUELTO' })}
             />
@@ -618,7 +641,7 @@ const AnalisisMascotasPage = () => {
 
         {/* Tamaño + Ranking especie */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartCard title="Distribución por tamaño" note="Datos totales — no varía con filtros">
+          <ChartCard title={(mesDesde || mesHasta) ? 'Distribución por tamaño (período filtrado)' : 'Distribución por tamaño'}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={tamanioData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -654,30 +677,33 @@ const AnalisisMascotasPage = () => {
           </ChartCard>
         </div>
 
-        {/* Estado actual */}
+        {/* Estado */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <p className="text-sm font-semibold text-slate-700 mb-3">Estado actual del sistema
-            <span className="text-[10px] font-normal text-slate-400 ml-2 italic">· Snapshot global — no varía con filtros</span>
+          <p className="text-sm font-semibold text-slate-700 mb-3">
+            {(mesDesde || mesHasta) ? 'Distribución por estado (período filtrado)' : 'Estado actual del sistema'}
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {stats.por_estado.map(e => (
-              <div key={e.estado} className="border border-slate-100 bg-slate-50 rounded-xl px-4 py-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: ESTADO_COLORS[e.estado] ?? '#94a3b8' }} />
-                  <p className="text-xs text-slate-500">{estadoLabel[e.estado] ?? e.estado}</p>
+            {estadoData.map(e => {
+              const total = estadoData.reduce((s, d) => s + d.count, 0);
+              return (
+                <div key={e.estado} className="border border-slate-100 bg-slate-50 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: ESTADO_COLORS[e.estado] ?? '#94a3b8' }} />
+                    <p className="text-xs text-slate-500">{estadoLabel[e.estado] ?? e.estado}</p>
+                  </div>
+                  <p className="text-xl font-bold text-slate-900">{e.count}</p>
+                  {total > 0 && (
+                    <p className="text-[10px] text-slate-400 mt-0.5">{Math.round((e.count / total) * 100)}% del {(mesDesde || mesHasta) ? 'período' : 'total'}</p>
+                  )}
                 </div>
-                <p className="text-xl font-bold text-slate-900">{e.count}</p>
-                {stats.total > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">{Math.round((e.count / stats.total) * 100)}% del total</p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
-          {stats.total > 0 && (
+          {estadoData.reduce((s, d) => s + d.count, 0) > 0 && (
             <p className="text-xs text-slate-400 mt-3">
-              Tasa de resolución: <span className="font-semibold text-emerald-600">{Math.round((resueltos / stats.total) * 100)}%</span>
-              {' · '}En búsqueda activa: <span className="font-semibold text-amber-600">{enBusqueda}</span> mascotas
+              Tasa de resolución: <span className="font-semibold text-emerald-600">{Math.round(((estadoData.find(e => e.estado === 'RESUELTO')?.count ?? 0) / estadoData.reduce((s, d) => s + d.count, 0)) * 100)}%</span>
+              {' · '}En búsqueda activa: <span className="font-semibold text-amber-600">{estadoData.find(e => e.estado === 'EN_BUSQUEDA')?.count ?? 0}</span> mascotas
             </p>
           )}
         </div>

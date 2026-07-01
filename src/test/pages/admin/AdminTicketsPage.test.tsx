@@ -51,8 +51,16 @@ vi.mock('../../../services/ticketService', () => ({
   },
 }));
 
+vi.mock('../../../services/userService', () => ({
+  userService: {
+    verUsuarioPorCredential: vi.fn().mockRejectedValue(new Error('not found')),
+  },
+}));
+
 import { ticketService } from '../../../services/ticketService';
+import { userService } from '../../../services/userService';
 const mockTicketService = vi.mocked(ticketService);
+const mockUserService = vi.mocked(userService);
 
 const renderPage = () =>
   render(<MemoryRouter><AdminTicketsPage /></MemoryRouter>);
@@ -65,6 +73,7 @@ describe('AdminTicketsPage', () => {
     mockTicketService.asignarTicket.mockResolvedValue({ ...ticket1, estado: 'en_proceso' } as any);
     mockTicketService.actualizarEstado.mockResolvedValue({ ...ticket1, estado: 'resuelto' } as any);
     mockTicketService.responderTicket.mockResolvedValue(undefined as any);
+    mockUserService.verUsuarioPorCredential.mockRejectedValue(new Error('not found'));
   });
 
   it('renders the tickets list page', async () => {
@@ -286,7 +295,7 @@ describe('AdminTicketsPage', () => {
     renderPage();
     await waitFor(() => screen.getByText('Contenido inapropiado'));
     fireEvent.click(screen.getAllByText('Contenido inapropiado')[0].closest('button')!);
-    await waitFor(() => expect(screen.getByText('Asignado a:')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Asignado a')).toBeInTheDocument());
   });
 
   it('back button in detail reloads tickets', async () => {
@@ -448,6 +457,15 @@ describe('AdminTicketsPage', () => {
     expect(document.body.innerHTML).toContain('Ayer');
   });
 
+  it('tiempoTranscurrido shows "Hace 1 mes" for ~31-day-old ticket (line 38 FALSE branch)', async () => {
+    const thirtyOneDaysAgo = new Date(Date.now() - 31 * 86400000);
+    const ticketMes = { ...ticket1, id: 'mes1', asunto: 'TicketMes', created_at: thirtyOneDaysAgo.toISOString() };
+    mockTicketService.listarTickets.mockResolvedValue([ticketMes] as any);
+    renderPage();
+    await waitFor(() => expect(screen.getByText('TicketMes')).toBeInTheDocument());
+    expect(document.body.innerHTML).toContain('Hace 1 mes');
+  });
+
   it('tiempoTranscurrido shows "dias" and "sem." for recent tickets (lines 35-36)', async () => {
     const threeDaysAgo = new Date(Date.now() - 3 * 86400000);
     const tenDaysAgo = new Date(Date.now() - 10 * 86400000);
@@ -458,5 +476,116 @@ describe('AdminTicketsPage', () => {
     await waitFor(() => expect(screen.getByText('TicketDias')).toBeInTheDocument());
     expect(document.body.innerHTML).toContain('Hace 3 d');
     expect(document.body.innerHTML).toContain('sem.');
+  });
+
+  it('detail: does not send response when respuesta is empty (line 154)', async () => {
+    mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket1 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    fireEvent.click(screen.getAllByText('Error de sistema')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    // Click Responder without entering any text (fires even though button is disabled in real browser)
+    fireEvent.click(screen.getByText('Responder'));
+    expect(mockTicketService.responderTicket).not.toHaveBeenCalled();
+  });
+
+  it('detail: actualizar does nothing when nuevoEstado is empty (line 141 !nuevoEstado branch)', async () => {
+    mockTicketService.listarTickets.mockResolvedValue([ticket2] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket2 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Contenido inapropiado'));
+    fireEvent.click(screen.getAllByText('Contenido inapropiado')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Actualizar'));
+    // Set select to empty string (fireEvent bypasses disabled check)
+    const estadoSelect = screen.getByRole('combobox');
+    fireEvent.change(estadoSelect, { target: { value: '' } });
+    fireEvent.click(screen.getByText('Actualizar'));
+    expect(mockTicketService.actualizarEstado).not.toHaveBeenCalled();
+  });
+
+  it('detail: shows usuarioInfo name when verUsuarioPorCredential resolves with ciudadano', async () => {
+    const userWithCiudadano = {
+      id: 'u1', email: 'juan@test.cl', rol: 'ciudadano',
+      ciudadano: { primer_nombre: 'Juan', apellido_paterno: 'Pérez' },
+    };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(userWithCiudadano as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket1 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    fireEvent.click(screen.getAllByText('Error de sistema')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getByText('Juan Pérez')).toBeInTheDocument());
+    expect(screen.getAllByText('juan@test.cl').length).toBeGreaterThan(0);
+  });
+
+  it('detail: shows usuarioInfo name when verUsuarioPorCredential resolves with institucion', async () => {
+    const userWithInstitucion = {
+      id: 'u2', email: 'vet@test.cl', rol: 'veterinaria',
+      institucion: { nombre_institucion: 'Clínica Vet' },
+    };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(userWithInstitucion as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket1 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    fireEvent.click(screen.getAllByText('Error de sistema')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getByText('Clínica Vet')).toBeInTheDocument());
+  });
+
+  it('detail: shows asignadoInfo when verUsuarioPorCredential resolves for asignado_a', async () => {
+    const adminUser = {
+      id: 'admin1', email: 'admin@test.cl', rol: 'administrador',
+      ciudadano: { primer_nombre: 'Carlos', apellido_paterno: 'Admin' },
+    };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(adminUser as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket2] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket2 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Contenido inapropiado'));
+    fireEvent.click(screen.getAllByText('Contenido inapropiado')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getByText('Carlos Admin')).toBeInTheDocument());
+  });
+
+  it('detail: shows email fallback for usuarioInfo when no ciudadano/institucion (line 213 ?? branch)', async () => {
+    const userEmailOnly = { id: 'u1', email: 'plain@test.cl', rol: 'ciudadano' };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(userEmailOnly as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket1] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket1 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Error de sistema'));
+    fireEvent.click(screen.getAllByText('Error de sistema')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getAllByText('plain@test.cl').length).toBeGreaterThan(0));
+  });
+
+  it('detail: shows email fallback for asignadoInfo when no ciudadano/institucion (line 237 ?? branch)', async () => {
+    const userEmailOnly = { id: 'admin1', email: 'admin-plain@test.cl', rol: 'administrador' };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(userEmailOnly as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket2] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket2 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Contenido inapropiado'));
+    fireEvent.click(screen.getAllByText('Contenido inapropiado')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getAllByText('admin-plain@test.cl').length).toBeGreaterThan(0));
+  });
+
+  it('detail: shows institucion asignadoInfo (uses nombre_institucion)', async () => {
+    const instUser = {
+      id: 'admin1', email: 'mod@test.cl', rol: 'moderador',
+      institucion: { nombre_institucion: 'Soporte SA' },
+    };
+    mockUserService.verUsuarioPorCredential.mockResolvedValue(instUser as any);
+    mockTicketService.listarTickets.mockResolvedValue([ticket2] as any);
+    mockTicketService.verTicket.mockResolvedValue(ticket2 as any);
+    renderPage();
+    await waitFor(() => screen.getByText('Contenido inapropiado'));
+    fireEvent.click(screen.getAllByText('Contenido inapropiado')[0].closest('button')!);
+    await waitFor(() => screen.getByText('Volver a tickets'));
+    await waitFor(() => expect(screen.getByText('Soporte SA')).toBeInTheDocument());
   });
 });

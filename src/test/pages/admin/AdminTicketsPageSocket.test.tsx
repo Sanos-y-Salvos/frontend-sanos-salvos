@@ -35,8 +35,15 @@ vi.mock('../../../services/ticketService', () => ({
   },
 }));
 
+vi.mock('../../../services/userService', () => ({
+  userService: {
+    verUsuarioPorCredential: vi.fn(),
+  },
+}));
+
 import AdminTicketsPage from '../../../pages/admin/AdminTicketsPage';
 import { ticketService } from '../../../services/ticketService';
+import { userService } from '../../../services/userService';
 const mockTicketService = vi.mocked(ticketService);
 
 const tkAdmin = {
@@ -60,6 +67,7 @@ describe('AdminTicketsPage - socket dedup (lines 105-106)', () => {
     mockTicketService.asignarTicket.mockResolvedValue({ ...tkAdmin, estado: 'en_proceso' } as any);
     mockTicketService.actualizarEstado.mockResolvedValue({ ...tkAdmin } as any);
     mockTicketService.responderTicket.mockResolvedValue(undefined as any);
+    vi.mocked(userService).verUsuarioPorCredential.mockRejectedValue(new Error('not found'));
   });
 
   it('adds real-time comment in admin ticket detail', async () => {

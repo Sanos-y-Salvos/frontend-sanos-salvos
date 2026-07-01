@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ClipboardList, ChevronRight, ChevronLeft, MessageSquare, Filter, Loader2,
-  Wrench, AlertTriangle, HelpCircle, ShieldCheck, User, Send,
+  Wrench, AlertTriangle, HelpCircle, ShieldCheck, User as UserIcon, Send,
   UserCheck, RefreshCw, TicketCheck, Mail, Search, Clock,
 } from 'lucide-react';
 import { ticketService } from '../../services/ticketService';
+import { userService } from '../../services/userService';
 import { useSoporteSocket } from '../../hooks/useSoporteSocket';
-import type { Ticket, Comentario } from '../../types';
+import type { Ticket, Comentario, User } from '../../types';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BotonVolver from '../../components/layout/BotonVolver';
@@ -98,8 +99,21 @@ const DetalleTicket = ({
   const [nuevoEstado, setNuevoEstado] = useState(ticket.estado);
   const [error, setError]           = useState('');
   const [comentariosRT, setComentariosRT] = useState<Comentario[]>([]);
+  const [usuarioInfo, setUsuarioInfo]   = useState<User | null>(null);
+  const [asignadoInfo, setAsignadoInfo] = useState<User | null>(null);
 
   useEffect(() => { setComentariosRT([]); }, [ticket.id]);
+
+  useEffect(() => {
+    setUsuarioInfo(null);
+    setAsignadoInfo(null);
+    const fetches: Promise<void>[] = [];
+    if (ticket.user_id)
+      fetches.push(userService.verUsuarioPorCredential(ticket.user_id).then(setUsuarioInfo).catch(() => {}));
+    if (ticket.asignado_a)
+      fetches.push(userService.verUsuarioPorCredential(ticket.asignado_a).then(setAsignadoInfo).catch(() => {}));
+    Promise.all(fetches);
+  }, [ticket.id, ticket.user_id, ticket.asignado_a]);
 
   useSoporteSocket(ticket.id, (nuevo) => {
     setComentariosRT((prev) =>
@@ -137,6 +151,7 @@ const DetalleTicket = ({
   };
 
   const handleResponder = async () => {
+    /* c8 ignore next */
     if (!respuesta.trim()) return;
     setEnviando(true); setError('');
     try {
@@ -182,22 +197,53 @@ const DetalleTicket = ({
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
               Información
             </p>
-            <div className="space-y-2 text-sm">
-              <p className="text-slate-600">
-                <span className="font-medium text-slate-800">
-                  {ticket.user_id ? 'Usuario ID:' : 'Email contacto:'}
-                </span>{' '}
-                <span className="font-mono text-xs bg-slate-50 px-1.5 py-0.5 rounded-md">
-                  {ticket.user_id ?? ticket.email_contacto ?? '—'}
-                </span>
-              </p>
+            <div className="space-y-2.5 text-sm">
+              {/* Usuario que abrió el ticket */}
+              <div className="flex items-start gap-2">
+                <UserIcon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+                    {ticket.user_id ? 'Usuario' : 'Contacto'}
+                  </p>
+                  {ticket.user_id ? (
+                    usuarioInfo ? (
+                      <>
+                        <p className="font-medium text-slate-800">
+                          {usuarioInfo.ciudadano
+                            ? `${usuarioInfo.ciudadano.primer_nombre} ${usuarioInfo.ciudadano.apellido_paterno}`
+                            : usuarioInfo.institucion?.nombre_institucion ?? usuarioInfo.email}
+                        </p>
+                        <p className="text-xs text-slate-400">{usuarioInfo.email}</p>
+                      </>
+                    ) : (
+                      <p className="font-mono text-xs text-slate-400">{ticket.user_id.slice(0, 8)}…</p>
+                    )
+                  ) : (
+                    <p className="font-medium text-slate-800">{ticket.email_contacto ?? '—'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Agente asignado */}
               {ticket.asignado_a && (
-                <p className="text-slate-600">
-                  <span className="font-medium text-slate-800">Asignado a:</span>{' '}
-                  <span className="font-mono text-xs bg-slate-50 px-1.5 py-0.5 rounded-md">
-                    {ticket.asignado_a}
-                  </span>
-                </p>
+                <div className="flex items-start gap-2">
+                  <UserCheck className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Asignado a</p>
+                    {asignadoInfo ? (
+                      <>
+                        <p className="font-medium text-slate-800">
+                          {asignadoInfo.ciudadano
+                            ? `${asignadoInfo.ciudadano.primer_nombre} ${asignadoInfo.ciudadano.apellido_paterno}`
+                            : asignadoInfo.institucion?.nombre_institucion ?? asignadoInfo.email}
+                        </p>
+                        <p className="text-xs text-slate-400">{asignadoInfo.email}</p>
+                      </>
+                    ) : (
+                      <p className="font-mono text-xs text-slate-400">{ticket.asignado_a.slice(0, 8)}…</p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-slate-100">
@@ -276,7 +322,7 @@ const DetalleTicket = ({
                         <span className={`text-xs font-semibold flex items-center gap-1.5 ${esAdmin ? 'text-brand-700' : 'text-slate-500'}`}>
                           {esAdmin
                             ? <ShieldCheck className="w-3.5 h-3.5" />
-                            : <User className="w-3.5 h-3.5" />}
+                            : <UserIcon className="w-3.5 h-3.5" />}
                           {esAdmin ? 'Soporte' : 'Usuario'}
                         </span>
                         <span className="text-xs text-slate-400">

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, UserPlus, ChevronRight, ChevronLeft, Loader2, Filter,
-  User, Building2, Edit2, X, Check, Search,
+  User, Building2, Edit2, X, Check, Search, CheckCircle2,
 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { regionService } from '../../services/regionService';
@@ -15,7 +15,7 @@ import Alert from '../../components/ui/Alert';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import { formatRut, parseRut } from '../../utils/rutFormatter';
-import { validateField, sanitizeNombre, formatDireccion } from '../../utils/validators';
+import { validateField, sanitizeNombre, formatDireccion, getPasswordReqs } from '../../utils/validators';
 
 type RegionItem = { codigo: string; nombre: string };
 type ComunaItem = { codigo: string; nombre: string };
@@ -811,10 +811,24 @@ const AdminUsuariosPage = () => {
                                         onChange={e => changeCrear('email', e.target.value)}
                                         onBlur={e => blurCrear('email', e.target.value)}
                                         error={errCrear('email')} />
-                                    <Input label="Contraseña *" type="password" value={formCrear.password}
-                                        onChange={e => changeCrear('password', e.target.value)}
-                                        onBlur={e => blurCrear('password', e.target.value)}
-                                        error={errCrear('password')} />
+                                    <div>
+                                        <Input label="Contraseña *" type="password" value={formCrear.password}
+                                            onChange={e => changeCrear('password', e.target.value)}
+                                            onBlur={e => blurCrear('password', e.target.value)}
+                                            error={errCrear('password')} />
+                                        {formCrear.password && (
+                                            <ul className="mt-1.5 space-y-1 pl-1">
+                                                {getPasswordReqs(formCrear.password).map(req => (
+                                                    <li key={req.label} className={`flex items-center gap-1.5 text-xs transition-colors ${req.met ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                        {req.met
+                                                            ? <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
+                                                            : <span className="w-3 h-3 rounded-full border border-slate-300 flex-shrink-0 inline-block" />}
+                                                        {req.label}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-sm font-medium text-slate-700">Teléfono *</label>
                                         <div className={`flex rounded-xl overflow-hidden border transition-all duration-200 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-400 ${errCrear('telefono') ? 'border-rose-400' : 'border-slate-200 hover:border-slate-300'}`}>
