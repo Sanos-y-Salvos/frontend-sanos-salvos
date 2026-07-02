@@ -2,7 +2,7 @@ import axios from 'axios';
 import { storage } from '../utils/storage';
 import type { Sala, Mensaje, SalaDenuncia } from '../types';
 
-export const MENSAJERIA_URL = import.meta.env.VITE_MS_MENSAJERIA_URL || 'http://localhost:3006';
+export const MENSAJERIA_URL = import.meta.env.VITE_MS_MENSAJERIA_URL ?? 'http://localhost:3006';
 
 const mensajeriaApi = axios.create({ baseURL: MENSAJERIA_URL });
 mensajeriaApi.interceptors.request.use((config) => {

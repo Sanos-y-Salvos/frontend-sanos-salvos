@@ -13,6 +13,8 @@ COPY . .
 # Mensajería (:3006) y mascotas (:3003) usan el fallback a localhost
 # porque esos puertos están expuestos directamente al host.
 ENV VITE_API_GATEWAY_URL=""
+ENV VITE_MS_MASCOTAS_URL=""
+ENV VITE_MS_MENSAJERIA_URL=""
 
 RUN npx vite build
 
