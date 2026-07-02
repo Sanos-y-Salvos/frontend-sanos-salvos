@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PawPrint, MapPin, Calendar, Cpu, AlertCircle, Loader2, MessageCircle, CheckCircle2, XCircle, Edit2, Check, X, Trash2 } from 'lucide-react';
 import { obtenerReporte, cambiarEstadoReporte, editarReporte } from '../../services/reporteService';
-import { listarMatchesPorReporte } from '../../services/matchingService';
+import { listarMatchesPorReporte, actualizarEstadoMatch } from '../../services/matchingService';
 import { useAuth } from '../../hooks/useAuth';
 import type { Reporte, Match } from '../../types';
 import Navbar from '../../components/layout/Navbar';
@@ -58,6 +58,7 @@ const ReporteDetallePage = () => {
     ubicacionLatitud: '', ubicacionLongitud: '',
   });
   const [confirmAbandonar, setConfirmAbandonar] = useState(false);
+  const [matchCargando, setMatchCargando] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -125,6 +126,31 @@ const ReporteDetallePage = () => {
     });
     setModoEdicion(true);
     setError('');
+  };
+
+  const handleAceptarMatch = async (matchId: string) => {
+    setMatchCargando(matchId);
+    try {
+      await actualizarEstadoMatch(matchId, 'ACEPTADO');
+      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, estado: 'ACEPTADO' } : m));
+      navigate('/mensajes');
+    } catch {
+      setError('No se pudo aceptar la coincidencia. Intenta de nuevo.');
+    } finally {
+      setMatchCargando(null);
+    }
+  };
+
+  const handleRechazarMatch = async (matchId: string) => {
+    setMatchCargando(matchId);
+    try {
+      await actualizarEstadoMatch(matchId, 'RECHAZADO');
+      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, estado: 'RECHAZADO' } : m));
+    } catch {
+      setError('No se pudo rechazar la coincidencia. Intenta de nuevo.');
+    } finally {
+      setMatchCargando(null);
+    }
   };
 
   const guardarEdicion = async () => {
@@ -420,8 +446,8 @@ const ReporteDetallePage = () => {
             </div>
           )}
 
-          {/* Acciones para estado EMPAREJADO — solo al dueño */}
-          {esOwner && reporte.estado === 'EMPAREJADO' && (
+          {/* Acciones para estado EMPAREJADO — solo al dueño del reporte de mascota PERDIDA */}
+          {esOwner && reporte.tipo === 'PERDIDA' && reporte.estado === 'EMPAREJADO' && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
@@ -487,7 +513,11 @@ const ReporteDetallePage = () => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="space-y-1.5">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                                match.estado === 'PENDIENTE' ? 'bg-amber-100 text-amber-700' :
+                                match.estado === 'ACEPTADO'  ? 'bg-emerald-100 text-emerald-700' :
+                                                               'bg-slate-100 text-slate-500'
+                              }`}>
                                 {match.estado}
                               </span>
                               {match.auto_confirmado && (
@@ -510,13 +540,40 @@ const ReporteDetallePage = () => {
                           >
                             Ver reporte
                           </button>
-                          <button
-                            onClick={() => navigate('/mensajes')}
-                            className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all active:scale-[0.98] font-medium"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            Ir a conversación
-                          </button>
+                          {match.estado === 'PENDIENTE' && (
+                            <>
+                              <button
+                                onClick={() => handleRechazarMatch(match.id)}
+                                disabled={matchCargando === match.id}
+                                className="flex items-center justify-center gap-1 text-xs px-3 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:border-rose-300 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-50 transition-all font-medium"
+                              >
+                                {matchCargando === match.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                                Rechazar
+                              </button>
+                              <button
+                                onClick={() => handleAceptarMatch(match.id)}
+                                disabled={matchCargando === match.id}
+                                className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-50 transition-all active:scale-[0.98] font-medium"
+                              >
+                                {matchCargando === match.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                                Aceptar y chatear
+                              </button>
+                            </>
+                          )}
+                          {match.estado === 'ACEPTADO' && (
+                            <button
+                              onClick={() => navigate('/mensajes')}
+                              className="flex-1 flex items-center justify-center gap-1.5 text-xs py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all active:scale-[0.98] font-medium"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              Ir al chat
+                            </button>
+                          )}
+                          {match.estado === 'RECHAZADO' && (
+                            <span className="flex-1 flex items-center justify-center text-xs py-2.5 text-slate-400 font-medium">
+                              Coincidencia rechazada
+                            </span>
+                          )}
                         </div>
                       </li>
                     );
