@@ -261,7 +261,9 @@ describe('PerfilPage', () => {
     const file = new File(['img'], 'nueva.jpg', { type: 'image/jpeg' });
     Object.defineProperty(fileInput, 'files', { value: [file] });
     fireEvent.change(fileInput);
-    expect(screen.getByText('Cambiar foto seleccionada')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText('Cambiar foto seleccionada')).toBeInTheDocument()
+    );
   });
 
   it('changes region and loads comunas in edit mode', async () => {
