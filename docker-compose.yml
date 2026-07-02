@@ -2,11 +2,12 @@ services:
 
   frontend:
     container_name: frontend
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: lucianobc/front_sanos_salvos:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     restart: unless-stopped
     networks:
       - sanos-salvos
